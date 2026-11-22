@@ -1,69 +1,123 @@
 import SwiftUI
 import PibblesCore
 
-/// The market: four stalls, each with its puzzles.
+/// The market, as on the style board: a card per stall with its icon tile.
 struct MarketView: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16.0) {
-                HStack(spacing: 12.0) {
-                    PibblesLogo(size: 44.0)
-                    VStack(alignment: .leading, spacing: 0.0) {
-                        Text(T.s("Puzzle Market", "Puzzelmarkt"))
-                            .font(PibblesStyle.title(26.0))
-                            .foregroundStyle(PibblesStyle.ink)
-                        Text(T.s("Every stall has a new puzzle each day", "Elke kraam heeft elke dag een nieuwe puzzel"))
-                            .font(PibblesStyle.text(13.0))
-                            .foregroundStyle(PibblesStyle.muted)
+            VStack(alignment: .leading, spacing: 14.0) {
+                ZStack(alignment: .bottomLeading) {
+                    Landscape(height: 130.0)
+                    HStack(spacing: 12.0) {
+                        PibblesLogo(size: 48.0)
+                        VStack(alignment: .leading, spacing: 0.0) {
+                            Text(T.s("Puzzle Market", "Puzzelmarkt"))
+                                .font(PibblesStyle.title(28.0))
+                                .foregroundStyle(PibblesStyle.ink)
+                            Text(T.s("Discover more puzzles", "Ontdek meer puzzels"))
+                                .font(PibblesStyle.text(14.0))
+                                .foregroundStyle(PibblesStyle.muted)
+                        }
                     }
+                    .padding(.bottom, 6.0)
                 }
                 ForEach(KindInfo.stalls, id: \.self) { stall in
-                    VStack(alignment: .leading, spacing: 10.0) {
-                        HStack(spacing: 10.0) {
-                            RoundedRectangle(cornerRadius: 4.0)
-                                .fill(PibblesStyle.stallColor(stall))
-                                .frame(width: 8.0, height: 28.0)
-                            VStack(alignment: .leading, spacing: 0.0) {
-                                Text(stall)
-                                    .font(PibblesStyle.title(20.0))
+                    NavigationLink(destination: StallView(stall: stall)) {
+                        StallCard(stall: stall)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 16.0)
+            .padding(.bottom, 16.0)
+        }
+        .pibblesScreen()
+        .hiddenNavigationBar()
+    }
+}
+
+/// One stall: coloured icon tile, name, tagline, its puzzles, a chevron, and a hill.
+struct StallCard: View {
+    let stall: String
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            Hills(peaks: [0.6, 0.2, 0.5, 0.1], baseline: 0.95)
+                .fill(PibblesStyle.stallColor(stall).opacity(0.14))
+                .frame(width: 150.0, height: 60.0)
+            HStack(spacing: 14.0) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16.0)
+                        .fill(PibblesStyle.stallColor(stall))
+                    StallIcon(stall: stall, size: 30.0)
+                }
+                .frame(width: 58.0, height: 58.0)
+                VStack(alignment: .leading, spacing: 2.0) {
+                    Text(stall)
+                        .font(PibblesStyle.title(20.0))
+                        .foregroundStyle(PibblesStyle.ink)
+                    Text(KindInfo.stallTagline(stall))
+                        .font(PibblesStyle.text(13.0))
+                        .foregroundStyle(PibblesStyle.muted)
+                    Text(kindNames)
+                        .font(PibblesStyle.text(13.0, .semibold))
+                        .foregroundStyle(PibblesStyle.stallColor(stall))
+                }
+                Spacer()
+                Text("›")
+                    .font(PibblesStyle.title(28.0))
+                    .foregroundStyle(PibblesStyle.muted)
+            }
+            .padding(14.0)
+        }
+        .background(PibblesStyle.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 20.0))
+    }
+
+    var kindNames: String {
+        var names = [String]()
+        for kind in KindInfo.kinds(stall: stall) { names.append(KindInfo.name(kind)) }
+        return names.joined(separator: " · ")
+    }
+}
+
+/// A stall's puzzles, each with its week.
+struct StallView: View {
+    let stall: String
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14.0) {
+                StallCard(stall: stall)
+                ForEach(KindInfo.kinds(stall: stall), id: \.self) { kind in
+                    NavigationLink(destination: KindWeekView(kind: kind)) {
+                        HStack(spacing: 12.0) {
+                            KindBadge(kind: kind, size: 48.0)
+                            VStack(alignment: .leading, spacing: 2.0) {
+                                Text(KindInfo.name(kind))
+                                    .font(PibblesStyle.text(18.0, .semibold))
                                     .foregroundStyle(PibblesStyle.ink)
-                                Text(KindInfo.stallTagline(stall))
+                                Text(KindInfo.tagline(kind))
                                     .font(PibblesStyle.text(13.0))
                                     .foregroundStyle(PibblesStyle.muted)
                             }
+                            Spacer()
+                            Text("›")
+                                .font(PibblesStyle.title(24.0))
+                                .foregroundStyle(PibblesStyle.muted)
                         }
-                        ForEach(KindInfo.kinds(stall: stall), id: \.self) { kind in
-                            NavigationLink(destination: KindWeekView(kind: kind)) {
-                                HStack(spacing: 12.0) {
-                                    KindBadge(kind: kind, size: 40.0)
-                                    VStack(alignment: .leading, spacing: 2.0) {
-                                        Text(KindInfo.name(kind))
-                                            .font(PibblesStyle.text(17.0, .semibold))
-                                            .foregroundStyle(PibblesStyle.ink)
-                                        Text(KindInfo.tagline(kind))
-                                            .font(PibblesStyle.text(13.0))
-                                            .foregroundStyle(PibblesStyle.muted)
-                                    }
-                                    Spacer()
-                                    Text("›")
-                                        .font(PibblesStyle.title(24.0))
-                                        .foregroundStyle(PibblesStyle.muted)
-                                }
-                                .padding(12.0)
-                                .background(PibblesStyle.background)
-                                .clipShape(RoundedRectangle(cornerRadius: 14.0))
-                            }
-                            .buttonStyle(.plain)
-                        }
+                        .padding(14.0)
+                        .background(PibblesStyle.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 16.0))
                     }
-                    .card(14.0)
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 16.0)
             .padding(.vertical, 12.0)
         }
         .pibblesScreen()
-        .hiddenNavigationBar()
+        .navigationTitle(stall)
     }
 }
 
@@ -82,7 +136,7 @@ struct KindWeekView: View {
                         Text(KindInfo.name(kind))
                             .font(PibblesStyle.title(26.0))
                             .foregroundStyle(PibblesStyle.ink)
-                        Text(T.s("\(kind.stall) stall", "Kraam \(kind.stall)") + " · " + KindInfo.tagline(kind))
+                        Text(KindInfo.tagline(kind))
                             .font(PibblesStyle.text(13.0))
                             .foregroundStyle(PibblesStyle.muted)
                     }

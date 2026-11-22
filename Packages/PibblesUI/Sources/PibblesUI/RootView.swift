@@ -27,17 +27,28 @@ public struct RootView: View {
     }
 }
 
-/// One small number tile: streak, jokers, solved today.
+/// One small number tile with its icon: streak, jokers, today.
 struct StatTile: View {
     let value: String
     let label: String
     let color: Color
+    let icon: String
 
     var body: some View {
-        VStack(spacing: 2.0) {
+        VStack(spacing: 4.0) {
+            ZStack {
+                if icon == "flame" {
+                    FlameIcon().fill(color)
+                } else if icon == "cube" {
+                    CubeIcon().stroke(color, style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
+                } else {
+                    TrophyIcon().stroke(color, style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
+                }
+            }
+            .frame(width: 22.0, height: 22.0)
             Text(value)
-                .font(PibblesStyle.title(24.0))
-                .foregroundStyle(color)
+                .font(PibblesStyle.title(22.0))
+                .foregroundStyle(PibblesStyle.ink)
             Text(label)
                 .font(PibblesStyle.text(12.0, .medium))
                 .foregroundStyle(PibblesStyle.muted)
@@ -45,11 +56,11 @@ struct StatTile: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12.0)
         .background(PibblesStyle.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 16.0))
+        .clipShape(RoundedRectangle(cornerRadius: 18.0))
     }
 }
 
-/// A coloured square with the first letter of a puzzle: the stall badge.
+/// A coloured rounded square with the puzzle's icon.
 struct KindBadge: View {
     let kind: PuzzleKind
     var size: Double = 44.0
@@ -58,9 +69,7 @@ struct KindBadge: View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.28)
                 .fill(PibblesStyle.kindColor(kind))
-            Text(String(KindInfo.name(kind).prefix(1)))
-                .font(PibblesStyle.title(size * 0.45))
-                .foregroundStyle(Color.white)
+            KindIcon(kind: kind, size: size * 0.52)
         }
         .frame(width: size, height: size)
     }

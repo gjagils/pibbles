@@ -9,6 +9,7 @@ struct LoadedPuzzle {
     var numbers: NumbersPuzzle? = nil
     var sums: SumsPuzzle? = nil
     var stars: StarsPuzzle? = nil
+    var links: LinksPuzzle? = nil
 }
 
 /// Plays one puzzle of one day: clock, board, hints and the result. The first solve of a
@@ -131,6 +132,8 @@ struct PlayView: View {
             PatternsBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.numbers {
             NumbersBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+        } else if let puzzle = loaded.links {
+            LinksBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.stars {
             StarsBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.sums {
@@ -181,39 +184,43 @@ struct PlayView: View {
         case PuzzleKind.patterns: result.patterns = Daily.patterns(day: day)
         case PuzzleKind.numbers: result.numbers = Daily.numbers(day: day)
         case PuzzleKind.stars: result.stars = StarsGenerator.generate(weekday: PuzzleCalendar.weekday(day: day), seed: PuzzleKind.stars.seed(dateKey: PuzzleCalendar.dateKey(day: day)))
+        case PuzzleKind.links: result.links = LinksGenerator.generate(weekday: PuzzleCalendar.weekday(day: day), seed: PuzzleKind.links.seed(dateKey: PuzzleCalendar.dateKey(day: day)))
         case PuzzleKind.sums: result.sums = SumsGenerator.generate(weekday: PuzzleCalendar.weekday(day: day), seed: PuzzleKind.sums.seed(dateKey: PuzzleCalendar.dateKey(day: day)))
-        default: break
         }
         return result
     }
 }
 
-/// Buttons under a board: hint and start over.
+/// Buttons under a board, as on the style board: start over, and a hint with its count.
 struct BoardControls: View {
     let hints: Int
     let onHint: () -> Void
     let onClear: () -> Void
 
     var body: some View {
-        HStack(spacing: 12.0) {
+        HStack(spacing: 18.0) {
             Button(action: onClear) {
-                Text(T.s("Start over", "Opnieuw"))
-                    .font(PibblesStyle.text(15.0, .semibold))
-                    .foregroundStyle(PibblesStyle.ink)
-                    .padding(.horizontal, 16.0)
-                    .padding(.vertical, 10.0)
+                RestartIcon()
+                    .stroke(PibblesStyle.ink, style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
+                    .frame(width: 22.0, height: 22.0)
+                    .frame(width: 54.0, height: 54.0)
                     .background(PibblesStyle.surface)
-                    .clipShape(Capsule())
+                    .clipShape(Circle())
             }
             .buttonStyle(.plain)
             Button(action: onHint) {
-                Text(hints == 0 ? T.s("Hint", "Hint") : "Hint (\(hints))")
-                    .font(PibblesStyle.text(15.0, .semibold))
-                    .foregroundStyle(Color.white)
-                    .padding(.horizontal, 16.0)
-                    .padding(.vertical, 10.0)
-                    .background(PibblesStyle.orange)
-                    .clipShape(Capsule())
+                HStack(spacing: 8.0) {
+                    BulbIcon()
+                        .stroke(PibblesStyle.mustard, style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
+                        .frame(width: 20.0, height: 22.0)
+                    Text(hints == 0 ? T.s("Hint", "Hint") : "\(hints)")
+                        .font(PibblesStyle.text(16.0, .semibold))
+                        .foregroundStyle(PibblesStyle.ink)
+                }
+                .padding(.horizontal, 20.0)
+                .frame(height: 54.0)
+                .background(PibblesStyle.surface)
+                .clipShape(Capsule())
             }
             .buttonStyle(.plain)
         }

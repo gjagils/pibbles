@@ -197,9 +197,9 @@ struct StatsView: View {
                     .foregroundStyle(PibblesStyle.ink)
                 let view = store.book.streakView(today: store.today)
                 HStack(spacing: 10.0) {
-                    StatTile(value: "\(view.streak)", label: T.s("Streak", "Reeks"), color: PibblesStyle.orange)
-                    StatTile(value: "\(store.book.streak.best)", label: T.s("Best streak", "Langste reeks"), color: PibblesStyle.teal)
-                    StatTile(value: "\(view.jokers)", label: T.s("Jokers", "Jokers"), color: PibblesStyle.purple)
+                    StatTile(value: "\(view.streak)", label: T.s("Streak", "Reeks"), color: PibblesStyle.orange, icon: "flame")
+                    StatTile(value: "\(store.book.streak.best)", label: T.s("Best streak", "Langste reeks"), color: PibblesStyle.teal, icon: "trophy")
+                    StatTile(value: "\(view.jokers)", label: T.s("Jokers", "Jokers"), color: PibblesStyle.purple, icon: "cube")
                 }
                 Text(T.s("Every 5 days in a row earn a joker (at most 3). A missed day costs a joker; without one the streak starts again and the jokers stay.", "Elke 5 dagen op rij leveren een joker op (hooguit 3). Een gemiste dag kost een joker; zonder joker begint de reeks opnieuw en blijven de jokers."))
                     .font(PibblesStyle.text(13.0))
