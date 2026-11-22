@@ -72,6 +72,9 @@ final class PlayModel {
 /// Plays one puzzle of one day: clock, board, hints and the result. The first solve of a
 /// day is final (ProgressBook); playing it again afterwards does not change the result.
 struct PlayView: View {
+    /// The puzzle this screen was opened for. The model keeps it fixed: SwiftUI may hand
+    /// this view a new `kind` when the link that opened it changes (the home card moves on
+    /// to the next puzzle after a solve), so everything below reads `model.kind`.
     let kind: PuzzleKind
     let day: Int
     @State var store = GameStore.shared
@@ -115,18 +118,18 @@ struct PlayView: View {
             }
         }
         .pibblesScreen()
-        .navigationTitle(KindInfo.name(kind))
+        .navigationTitle(KindInfo.name(model.kind))
         .onAppear { model.start() }
     }
 
     var header: some View {
         HStack(spacing: 12.0) {
-            KindBadge(kind: kind, size: 40.0)
+            KindBadge(kind: model.kind, size: 40.0)
             VStack(alignment: .leading, spacing: 0.0) {
-                Text(T.weekday(day) + " · " + T.difficulty(day))
+                Text(T.weekday(model.day) + " · " + T.difficulty(model.day))
                     .font(PibblesStyle.text(16.0, .semibold))
                     .foregroundStyle(PibblesStyle.ink)
-                Text(PuzzleCalendar.dateKey(day: day))
+                Text(PuzzleCalendar.dateKey(day: model.day))
                     .font(PibblesStyle.text(12.0))
                     .foregroundStyle(PibblesStyle.muted)
             }
@@ -142,7 +145,7 @@ struct PlayView: View {
 
     var rulesCard: some View {
         VStack(alignment: .leading, spacing: 6.0) {
-            ForEach(KindInfo.rules(kind), id: \.self) { rule in
+            ForEach(KindInfo.rules(model.kind), id: \.self) { rule in
                 Text("•  " + rule)
                     .font(PibblesStyle.text(14.0))
                     .foregroundStyle(PibblesStyle.ink)
@@ -153,7 +156,7 @@ struct PlayView: View {
     }
 
     func resultCard(milliseconds: Int) -> some View {
-        let record = store.book.record(kind: kind, day: day)
+        let record = store.book.record(kind: model.kind, day: model.day)
         return VStack(spacing: 6.0) {
             Text(T.s("Solved!", "Opgelost!"))
                 .font(PibblesStyle.title(24.0))
@@ -162,7 +165,7 @@ struct PlayView: View {
                 .font(PibblesStyle.text(16.0, .semibold))
                 .foregroundStyle(PibblesStyle.ink)
             if firstSolve {
-                Text(day == store.today ? T.s("Counted for today's ranking and your streak.", "Telt mee voor de ranglijst van vandaag en je reeks.") : T.s("Saved in your archive.", "Bewaard in je archief."))
+                Text(model.day == store.today ? T.s("Counted for today's ranking and your streak.", "Telt mee voor de ranglijst van vandaag en je reeks.") : T.s("Saved in your archive.", "Bewaard in je archief."))
                     .font(PibblesStyle.text(13.0))
                     .foregroundStyle(PibblesStyle.muted)
             } else if let record {
@@ -209,10 +212,10 @@ struct PlayView: View {
         model.finished = true
         finishedMilliseconds = milliseconds
         finishedHints = hints
-        firstSolve = store.solved(kind: kind, day: day, milliseconds: milliseconds, hints: hints)
-        if firstSolve && day == store.today {
-            let kindValue = kind
-            let dayValue = day
+        firstSolve = store.solved(kind: model.kind, day: model.day, milliseconds: milliseconds, hints: hints)
+        if firstSolve && model.day == store.today {
+            let kindValue = model.kind
+            let dayValue = model.day
             Task {
                 await ScoreUploader.submit(kind: kindValue, day: dayValue, milliseconds: milliseconds, hints: hints, answer: answer)
             }

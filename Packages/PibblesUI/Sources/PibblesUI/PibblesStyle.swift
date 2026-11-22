@@ -32,10 +32,12 @@ public enum PibblesStyle {
     public static let rose = Color("Rose", bundle: .module)
     public static let mustard = Color("Mustard", bundle: .module)
     public static let sky = Color("Sky", bundle: .module)
+    public static let berry = Color("Berry", bundle: .module)
+    public static let leaf = Color("Leaf", bundle: .module)
 
-    /// Piece and line colors by number: six that stay apart next to each other.
+    /// Piece and line colors by number: eight that stay apart next to each other.
     public static func pieceColor(_ index: Int) -> Color {
-        let palette = [purple, orange, teal, rose, sky, mustard, plum, sage]
+        let palette = [purple, orange, teal, rose, sky, mustard, berry, leaf]
         return palette[index % palette.count]
     }
 
@@ -44,7 +46,7 @@ public enum PibblesStyle {
         case PuzzleKind.blocks, PuzzleKind.sums: return purple
         case PuzzleKind.logic, PuzzleKind.links: return teal
         case PuzzleKind.patterns, PuzzleKind.stars: return orange
-        case PuzzleKind.numbers: return plum
+        case PuzzleKind.numbers: return sky
         }
     }
 
@@ -52,7 +54,7 @@ public enum PibblesStyle {
         if stall == "Blocks" { return purple }
         if stall == "Logic" { return teal }
         if stall == "Patterns" { return orange }
-        return plum
+        return sky
     }
 }
 

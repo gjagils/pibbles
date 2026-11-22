@@ -6,6 +6,9 @@ import PibblesCore
 struct HomeView: View {
     @State var store = GameStore.shared
     @State var today = PuzzleCalendar.today()
+    /// The puzzle behind the big card; set when home appears, not on every change, so an
+    /// open puzzle screen is not handed another puzzle when this one gets solved.
+    @State var cardKind = PuzzleKind.blocks
 
     var body: some View {
         ScrollView {
@@ -81,7 +84,10 @@ struct HomeView: View {
         }
         .pibblesScreen()
         .hiddenNavigationBar()
-        .onAppear { today = PuzzleCalendar.today() }
+        .onAppear {
+            today = PuzzleCalendar.today()
+            cardKind = nextKind
+        }
     }
 
     /// The first puzzle of today that is not solved yet, or the first of all.
@@ -93,13 +99,13 @@ struct HomeView: View {
     }
 
     var todayCard: some View {
-        NavigationLink(destination: PlayView(kind: nextKind, day: today)) {
+        NavigationLink(destination: PlayView(kind: cardKind, day: today)) {
             HStack(spacing: 14.0) {
                 CalendarIcon()
                     .stroke(PibblesStyle.ink, style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
                     .frame(width: 34.0, height: 34.0)
                 VStack(alignment: .leading, spacing: 2.0) {
-                    Text(solvedToday == PuzzleCase.count ? T.s("All done today!", "Alles gedaan vandaag!") : T.s("Today's puzzle", "Puzzel van vandaag") + ": " + KindInfo.name(nextKind))
+                    Text(solvedToday == PuzzleCase.count ? T.s("All done today!", "Alles gedaan vandaag!") : T.s("Today's puzzle", "Puzzel van vandaag") + ": " + KindInfo.name(cardKind))
                         .font(PibblesStyle.text(18.0, .bold))
                         .foregroundStyle(PibblesStyle.ink)
                     Text(T.weekday(today) + " · " + T.difficulty(today))
