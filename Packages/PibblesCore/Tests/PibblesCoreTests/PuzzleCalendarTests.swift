@@ -46,6 +46,8 @@ final class PuzzleCalendarTests: XCTestCase {
     func testSeedsPerKind() {
         XCTAssertEqual(PuzzleKind.blocks.seed(dateKey: "2026-11-23"), "2026-11-23")
         XCTAssertEqual(PuzzleKind.logic.seed(dateKey: "2026-11-23"), "logic|2026-11-23")
-        XCTAssertEqual(PuzzleKind.allCases.count, 4)
+        XCTAssertEqual(PuzzleKind.allCases.count, 7)
+        XCTAssertEqual(PuzzleKind.links.seed(dateKey: "2026-11-23"), "links|2026-11-23")
+        XCTAssertEqual(PuzzleKind.stars.stall, "Logic")
     }
 }

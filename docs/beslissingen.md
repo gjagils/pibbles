@@ -5,11 +5,14 @@ mag worden teruggedraaid; de reden staat erbij.
 
 1. **"netflix" gelezen als Android.** De opdracht zei "ios als netflix"; `HANDOFF.md`
    noemt App Store en Google Play. Er is gebouwd voor iOS en Android.
-2. **Vier puzzelsoorten, genoemd naar de kramen op het stijlbord**: Blocks (Randsom),
-   Logic, Patterns, Numbers. Logic is een binaire puzzel, Patterns een plaatjespuzzel met
-   getallen langs de rand, Numbers een getallenvierkant met groter-dan-tekens. Het zijn
-   bekende genres met eigen regels en eigen code; geen bestaande app nagebouwd.
-   Details in `docs/puzzels.md`.
+2. **Zeven puzzels in vier kramen.** De eigenaar speelde zes opties (`docs/keuze/`) en
+   koos ze alle zes. De kramen van het stijlbord zijn groepen: Blocks (Blocks), Logic
+   (Duo, Stars), Patterns (Pixels, Links), Numbers (Signs, Sums). Het zijn bekende genres
+   (binaire puzzel, Star Battle, plaatjespuzzel, Numberlink, getallenvierkant met tekens of
+   sommen) met eigen namen, eigen uiterlijk en eigen code. Duo lijkt op LinkedIns Tango en
+   Stars op LinkedIns Queens: spelregels zijn niet beschermd, namen en vormgeving wel, dus
+   die zijn eigen (geen zon/maan, geen kroontjes). Geen juridisch advies; laat dit nakijken
+   voor de lancering. Details in `docs/puzzels.md`.
 3. **App-taal Engels** (de naam en het stijlbord zijn Engels); documentatie Nederlands.
 4. **Bundle-id en applicationId `app.pibbles`**, afgeleid van het domein pibbles.app.
 5. **Puzzel van de dag volgt uit de datum**: zelfde datum, zelfde puzzel op elk toestel,

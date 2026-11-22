@@ -1,11 +1,24 @@
 import Foundation
 
-/// The four puzzle kinds: one stall each in the market.
+/// The puzzle kinds. The market groups them in four stalls (`stall`).
 public enum PuzzleKind: String, CaseIterable, Codable, Sendable {
     case blocks
     case logic
     case patterns
     case numbers
+    case stars
+    case links
+    case sums
+
+    /// The stall of the style board this kind belongs to.
+    public var stall: String {
+        switch self {
+        case PuzzleKind.blocks: return "Blocks"
+        case PuzzleKind.logic, PuzzleKind.stars: return "Logic"
+        case PuzzleKind.patterns, PuzzleKind.links: return "Patterns"
+        case PuzzleKind.numbers, PuzzleKind.sums: return "Numbers"
+        }
+    }
 
     /// The seed of the daily puzzle of this kind on a date (`yyyy-MM-dd`). Blocks keeps the
     /// bare date, as in the prototype.

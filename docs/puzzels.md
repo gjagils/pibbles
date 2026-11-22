@@ -2,6 +2,9 @@
 
 Alle puzzels staan in `Packages/PibblesCore`, met tests, en volgen deze afspraken.
 
+Zeven soorten, in vier kramen: Blocks (Blocks), Logic (Duo = `logic`, Stars), Patterns
+(Pixels = `patterns`, Links), Numbers (Signs = `numbers`, Sums).
+
 ## Gemeenschappelijk
 
 - **Dag**: `PuzzleCalendar.dayNumber` telt dagen sinds maandag 5 januari 2026 (dag 0).
@@ -42,3 +45,25 @@ Vul een n×n-veld met 1..n, in elke rij en kolom elk getal één keer. Tussen so
 buurvakken staat een teken: `{"lo":3,"hi":4}` betekent waarde(vak 3) < waarde(vak 4).
 Niveaus: 4, 4, 5, 5, 5, 6, 6. JSON:
 `{"size":4,"givens":[0,2,0,...],"relations":[{"lo":3,"hi":4}],"solution":[...]}` (`0` = leeg).
+
+## Stars
+
+Zet in elke rij, elke kolom en elk gebied precies één ster; sterren raken elkaar nergens,
+ook niet schuin. Het veld is n×n met n gebieden. Niveaus: 5, 6, 6, 7, 7, 8, 8. JSON:
+`{"size":6,"regions":[0,0,1,...],"solution":[5,2,4,1,3,0]}` (`regions`: gebied per vak,
+0..n-1; `solution`: de kolom van de ster per rij).
+
+## Links
+
+Verbind de twee stippen van elke kleur met een pad van buurvakken (horizontaal of
+verticaal); paden kruisen niet en vullen samen het hele veld. Niveaus: 5, 5, 6, 6, 7, 7, 8.
+JSON: `{"size":6,"ends":[-1,0,...],"solution":[[9,3,4,5],[7,13,...],...]}` (`ends`: kleur
+van de stip per vak, -1 = geen stip, elke kleur precies twee keer; `solution`: per kleur de
+vakken van het pad, van stip tot stip).
+
+## Sums
+
+Vul een n×n-veld met 1..n, in elke rij en kolom elk getal één keer; de getallen in een
+omlijnd blok tellen op tot de som van dat blok. Niveaus: 4, 4, 5, 5, 5, 6, 6. JSON:
+`{"size":5,"cages":[4,4,9,...],"sums":[11,4,...],"solution":[...]}` (`cages`: bloknummer
+per vak, 0..k-1; `sums`: som per blok).
