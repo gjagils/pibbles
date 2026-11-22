@@ -24,6 +24,10 @@ public struct RootView: View {
                 .tag(3)
         }
         .tint(PibblesStyle.purple)
+        .task {
+            // Results that could not be sent earlier (offline, server down)
+            await ScoreUploader.flush()
+        }
     }
 }
 

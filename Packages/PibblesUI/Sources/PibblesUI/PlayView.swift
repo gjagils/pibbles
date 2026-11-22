@@ -134,9 +134,7 @@ struct PlayView: View {
                     .foregroundStyle(PibblesStyle.muted)
             }
             Spacer()
-            Text(TimeText.clock(milliseconds: finishedMilliseconds ?? elapsed))
-                .font(PibblesStyle.text(18.0, .semibold))
-                .foregroundStyle(PibblesStyle.ink)
+            ClockLabel(model: model, finishedMilliseconds: finishedMilliseconds)
             Button(showRules ? T.s("Hide rules", "Verberg regels") : T.s("Rules", "Regels")) { showRules = !showRules }
                 .font(PibblesStyle.text(14.0, .semibold))
                 .foregroundStyle(PibblesStyle.purple)
@@ -202,9 +200,6 @@ struct PlayView: View {
         }
     }
 
-    var elapsed: Int {
-        return Int(model.now.timeIntervalSince(model.startedAt) * 1000.0)
-    }
 
     func solved(hints: Int, answer: String) {
         if finishedMilliseconds != nil { return }
@@ -234,6 +229,20 @@ struct PlayView: View {
         case PuzzleKind.sums: result.sums = SumsGenerator.generate(weekday: PuzzleCalendar.weekday(day: day), seed: PuzzleKind.sums.seed(dateKey: PuzzleCalendar.dateKey(day: day)))
         }
         return result
+    }
+}
+
+/// The running clock. Its own view, so only this label redraws twice a second and the
+/// board does not (redrawing the board while the clock ticked swallowed taps, 22 November).
+struct ClockLabel: View {
+    let model: PlayModel
+    let finishedMilliseconds: Int?
+
+    var body: some View {
+        let running = Int(model.now.timeIntervalSince(model.startedAt) * 1000.0)
+        return Text(TimeText.clock(milliseconds: finishedMilliseconds ?? running))
+            .font(PibblesStyle.text(18.0, .semibold))
+            .foregroundStyle(PibblesStyle.ink)
     }
 }
 

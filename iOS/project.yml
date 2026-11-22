@@ -38,6 +38,9 @@ targets:
         CFBundleLocalizations: [en, nl]
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
+        # Only lets a debug build reach `wrangler dev` on localhost; the live API is HTTPS
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
     settings:
       base:

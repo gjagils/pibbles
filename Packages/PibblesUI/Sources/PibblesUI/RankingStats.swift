@@ -4,22 +4,69 @@ import PibblesCore
 /// Sends a first solve of today to the ranking server, and reads today's ranking.
 /// The server (server/) may not be live yet: failures are quiet and the app keeps working.
 enum ScoreUploader {
-    static let base = "https://pibbles.app/api"
+    /// The live server; a debug build in the iOS Simulator talks to `npx wrangler dev` on this Mac.
+    static var base: String {
+        #if DEBUG && os(iOS) && !SKIP && targetEnvironment(simulator)
+        return "http://localhost:8787/api"
+        #else
+        return "https://pibbles.app/api"
+        #endif
+    }
 
     static func submit(kind: PuzzleKind, day: Int, milliseconds: Int, hints: Int, answer: String) async {
         let store = GameStore.shared
-        guard let url = URL(string: base + "/scores") else { return }
         let name = store.playerName.isEmpty ? T.s("Player", "Speler") : store.playerName
         let body = "{\"date\":\"\(PuzzleCalendar.dateKey(day: day))\",\"kind\":\"\(kind.rawValue)\",\"deviceId\":\"\(store.deviceId)\",\"name\":\(quoted(name)),\"ms\":\(milliseconds),\"hints\":\(hints),\"solution\":\(answer)}"
+        if await !send(body) {
+            var pending = loadPending()
+            pending.append(body)
+            savePending(pending)
+        }
+    }
+
+    /// Sends results that could not be sent before (offline, server down). The server only
+    /// takes today and yesterday and refuses the rest; refused ones are dropped.
+    static func flush() async {
+        let pending = loadPending()
+        if pending.isEmpty { return }
+        var keep = [String]()
+        for body in pending {
+            if await !send(body) { keep.append(body) }
+        }
+        savePending(keep)
+    }
+
+    /// One result per line (a JSON body has no line breaks); `stringArray` is not in Skip.
+    static func loadPending() -> [String] {
+        let text = UserDefaults.standard.string(forKey: "pendingScores") ?? ""
+        var result = [String]()
+        for line in text.split(separator: "\n") {
+            if !line.isEmpty { result.append(String(line)) }
+        }
+        return result
+    }
+
+    static func savePending(_ bodies: [String]) {
+        UserDefaults.standard.set(bodies.joined(separator: "\n"), forKey: "pendingScores")
+    }
+
+    /// True when the server answered (also when it refused the result): only a missing
+    /// answer or a server error means "try again later".
+    static func send(_ body: String) async -> Bool {
+        guard let url = URL(string: base + "/scores") else { return true }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = body.data(using: String.Encoding.utf8)
         request.timeoutInterval = 10.0
         do {
-            let _ = try await URLSession.shared.data(for: request)
+            let (_, response) = try await URLSession.shared.data(for: request)
+            if let http = response as? HTTPURLResponse {
+                return http.statusCode < 500
+            }
+            return true
         } catch {
-            // Offline or server not live: the result stays on the device.
+            return false
         }
     }
 
@@ -46,6 +93,7 @@ struct RankEntry: Codable, Hashable, Identifiable {
 
 struct RankingResponse: Codable {
     let top: [RankEntry]
+    let me: RankEntry?
 }
 
 /// Today's ranking per puzzle: time plus 30 seconds per hint, lowest wins.
@@ -53,6 +101,7 @@ struct RankingView: View {
     @State var store = GameStore.shared
     @State var kind = PuzzleKind.blocks
     @State var entries: [RankEntry]? = nil
+    @State var mine: RankEntry? = nil
     @State var failed = false
     @State var nameDraft = ""
 
@@ -92,12 +141,13 @@ struct RankingView: View {
                             .foregroundStyle(PibblesStyle.muted)
                     }
                     ForEach(entries) { entry in
+                        let isMine = mine?.rank == entry.rank && mine?.score == entry.score
                         HStack {
                             Text("\(entry.rank)")
                                 .font(PibblesStyle.title(17.0))
                                 .foregroundStyle(PibblesStyle.orange)
                                 .frame(width: 32.0, alignment: .leading)
-                            Text(entry.name)
+                            Text(isMine ? entry.name + T.s(" (you)", " (jij)") : entry.name)
                                 .font(PibblesStyle.text(15.0, .semibold))
                                 .foregroundStyle(PibblesStyle.ink)
                             Spacer()
@@ -106,8 +156,13 @@ struct RankingView: View {
                                 .foregroundStyle(PibblesStyle.ink)
                         }
                         .padding(12.0)
-                        .background(PibblesStyle.surface)
+                        .background(isMine ? PibblesStyle.purple.opacity(0.25) : PibblesStyle.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 12.0))
+                    }
+                    if let mine, mine.rank > entries.count {
+                        Text(T.s("You are number \(mine.rank).", "Jij staat op plaats \(mine.rank)."))
+                            .font(PibblesStyle.text(14.0, .semibold))
+                            .foregroundStyle(PibblesStyle.purple)
                     }
                 } else if failed {
                     Text(T.s("The ranking is not reachable right now. Your results are saved on this phone.", "De ranglijst is nu niet bereikbaar. Je uitslagen staan veilig op deze telefoon."))
@@ -169,7 +224,9 @@ struct RankingView: View {
 
     func refresh() async {
         entries = nil
+        mine = nil
         failed = false
+        await ScoreUploader.flush()
         let path = ScoreUploader.base + "/scores/" + PuzzleCalendar.dateKey(day: store.today) + "/" + kind.rawValue + "?deviceId=" + store.deviceId
         guard let url = URL(string: path) else { return }
         do {
@@ -178,7 +235,9 @@ struct RankingView: View {
                 failed = true
                 return
             }
-            entries = try JSONDecoder().decode(RankingResponse.self, from: data).top
+            let decoded = try JSONDecoder().decode(RankingResponse.self, from: data)
+            entries = decoded.top
+            mine = decoded.me
         } catch {
             failed = true
         }

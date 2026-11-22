@@ -21,3 +21,5 @@ Android/local.properties
 Android/.idea/
 *.iml
 .dev.vars
+Tools/*/.build/
+week-*.json
