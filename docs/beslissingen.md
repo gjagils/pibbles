@@ -16,8 +16,11 @@ mag worden teruggedraaid; de reden staat erbij.
 3. **App-taal Engels** (de naam en het stijlbord zijn Engels); documentatie Nederlands.
 4. **Bundle-id en applicationId `app.pibbles`**, afgeleid van het domein pibbles.app.
 5. **Puzzel van de dag volgt uit de datum**: zelfde datum, zelfde puzzel op elk toestel,
-   ook zonder internet. De server kent dezelfde puzzels via een weekpakket dat een
-   Swift-commando maakt (`Tools/PackBuilder`) en dat de beheerder vooraf kan bekijken.
+   ook zonder internet. De server kent dezelfde puzzels via een weekpakket dat
+   `Tools/PackBuilder` maakt; de beheerder bekijkt het vooraf op
+   `/admin/week/<maandag>?key=…`. De app haalt nog niets van de server op behalve de
+   ranglijst: dezelfde datum geeft toch dezelfde puzzel. Het automatisch maken op zondag
+   (een geplande taak op de Mac of in CI) is nog niet ingericht.
 6. **Reeks**: een dag telt als je minstens één puzzel van die dag oplost.
 7. **Bediening met tikken, niet slepen**: een blok kiezen en op het veld tikken. Slepen
    met een vinger werkt via Skip op Android niet zeker en was in het prototype ongetest.
@@ -27,3 +30,17 @@ mag worden teruggedraaid; de reden staat erbij.
    in D1. Niet uitgerold: uitrollen naar het echte domein laat ik aan de eigenaar.
 10. **Geen advertenties en geen aankoop in deze ronde**; het onderzoek daarnaar staat in
     `docs/verdienmodel.md` (aparte sessie).
+11. **App-icoon en logo: het icoon dat de eigenaar stuurde** (`docs/brand/`); de hoeken
+    zijn door mij met paars opgevuld. De overige iconen en het landschap zijn vormen in
+    code, tot er echt ontwerp is (`docs/beeldmateriaal.md`).
+12. **Links: een lijn mag zichzelf niet raken** (geen 2×2-blok van één kleur). Zo is de
+    oplossing uniek; een volle maar "kronkelende" lijn telt niet als oplossing.
+13. **Ranglijstnaam standaard "Player"/"Speler"**; aanpasbaar op het tabblad Ranglijst.
+    Uitslagen die niet verstuurd konden worden, gaan later alsnog (alleen vandaag/gisteren
+    telt voor de server).
+14. **Hint = één goed stuk erbij** (Blocks: een blok op een goede plek; Stars: een ster;
+    Links: een hele lijn; de rest: één vak). Elke hint kost 30 s in de ranglijst.
+15. **Kleuren in donkere modus** volgen het stijlbord (donkere kolom). Kraam Numbers en
+    Signs zijn blauw, zoals de Numbers-tegel op het stijlbord.
+16. **Niet gepusht naar GitHub en niets uitgerold** naar Cloudflare of de winkels: dat zijn
+    stappen naar buiten die de eigenaar zelf zet.
