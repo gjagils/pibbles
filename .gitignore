@@ -14,3 +14,10 @@ node_modules/
 .dev.vars
 .claude/worktrees/
 iOS/build/
+Android/.gradle/
+Android/build/
+Android/app/build/
+Android/local.properties
+Android/.idea/
+*.iml
+.dev.vars

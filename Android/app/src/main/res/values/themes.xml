@@ -1,0 +1,5 @@
+<resources>
+    <style name="Theme.Pibbles" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>
