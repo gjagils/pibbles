@@ -1,0 +1,23 @@
+# pibbles.app: one Worker for the website (static assets in public/) and the
+# API under /api/ plus the owner's preview under /admin/. See README.md.
+name = "pibbles"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+routes = [{ pattern = "pibbles.app", custom_domain = true }]
+
+# Everything is a static asset, except /api/* and /admin/*, which run the Worker.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+run_worker_first = ["/api/*", "/admin/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pibbles"
+# PLACEHOLDER: not created yet. Run `npx wrangler d1 create pibbles` and put the
+# database_id it prints here (README.md, "Live zetten").
+database_id = "00000000-0000-0000-0000-000000000000"
+
+# Secret (wrangler secret put ADMIN_KEY): the key for PUT /api/admin/week and
+# the preview page /admin/week/<maandag>?key=...
