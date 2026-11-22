@@ -17,6 +17,9 @@ public enum Solver {
     /// swapping two of them is not a second solution.
     public static func countSolutions(size: Int, shapeKeys: [String], rows: [Int], cols: [Int],
                                       limit: Int, budget: Int) -> SolveResult {
+        if !SolverSearch.usable(size: size, rows: rows, cols: cols) || shapeKeys.count > 10 {
+            return SolveResult(count: 0, nodes: 0, exhausted: false, first: nil)
+        }
         let search = SolverSearch(size: size, shapeKeys: shapeKeys, rows: rows, cols: cols,
                                   limit: limit, budget: budget)
         search.run(0)
@@ -31,15 +34,70 @@ private struct OrderedShape {
     let index: Int
 }
 
+/// Every place one shape fits on the board, in position order. Per placement: the squares
+/// as a bit mask (boards are at most 8×8), and how much it takes from each row and column,
+/// packed one byte per row (see `SolverSearch`). Built once, stored in `let` arrays.
+private final class Placements {
+    let positions: [Int]
+    let masks: [Int64]
+    let rowTakes: [Int64]
+    let colTakes: [Int64]
+
+    init(shape: PieceShape, size: Int) {
+        var positions = [Int]()
+        var masks = [Int64]()
+        var rowTakes = [Int64]()
+        var colTakes = [Int64]()
+        let one: Int64 = 1
+        var position = 0
+        while position < size * size {
+            let row = position / size
+            let col = position % size
+            if row + shape.height <= size && col + shape.width <= size {
+                var mask: Int64 = 0
+                var rowTake: Int64 = 0
+                var colTake: Int64 = 0
+                for cell in shape.cells {
+                    let square = (row + cell.row) * size + col + cell.col
+                    mask = mask | (one << square)
+                    rowTake = rowTake + (one << (8 * (row + cell.row)))
+                    colTake = colTake + (one << (8 * (col + cell.col)))
+                }
+                positions.append(position)
+                masks.append(mask)
+                rowTakes.append(rowTake)
+                colTakes.append(colTake)
+            }
+            position += 1
+        }
+        self.positions = positions
+        self.masks = masks
+        self.rowTakes = rowTakes
+        self.colTakes = colTakes
+    }
+}
+
+/// The search keeps its whole state in 64-bit numbers, never in arrays it writes to:
+/// Skip's Kotlin copies an array held by a class on every write, which made the search
+/// a hundred times slower on Android (22 November).
+/// - `occupied`: one bit per square.
+/// - `rowsLeft`/`colsLeft`: per row (column) one byte holding 8 + the count still to fill.
+///   A placement takes at most 4 from a byte, so bytes stay within 4…16; a byte below 8
+///   means the count went negative. Rows beyond the board stay at 8.
+/// - `chosen`: per depth 6 bits with the position chosen there.
 private final class SolverSearch {
+    static let eights: Int64 = 0x0808080808080808
+
     let size: Int
     let limit: Int
     let budget: Int
     let order: [OrderedShape]
-    var grid: [Bool]
-    var rowsLeft: [Int]
-    var colsLeft: [Int]
-    var positions: [Int]
+    let placements: [Placements]
+    let sameAsPrevious: [Bool]
+    var occupied: Int64 = 0
+    var rowsLeft: Int64 = 0
+    var colsLeft: Int64 = 0
+    var chosen: Int64 = 0
     var count = 0
     var nodes = 0
     var first: [Int]? = nil
@@ -58,88 +116,111 @@ private final class SolverSearch {
         }
         // Largest shapes first, equal shapes next to each other; the index keeps the
         // order stable (JavaScript's sort is stable, Swift's need not be).
-        self.order = list.sorted { a, b in
+        let sorted = list.sorted { a, b in
             if a.shape.cells.count != b.shape.cells.count { return a.shape.cells.count > b.shape.cells.count }
             if a.shape.key != b.shape.key { return a.shape.key < b.shape.key }
             return a.index < b.index
         }
-        self.grid = Array(repeating: false, count: size * size)
-        self.rowsLeft = rows
-        self.colsLeft = cols
-        self.positions = Array(repeating: 0, count: shapeKeys.count)
+        self.order = sorted
+        var built = [Placements]()
+        var same = [Bool]()
+        var depth = 0
+        while depth < sorted.count {
+            built.append(Placements(shape: sorted[depth].shape, size: size))
+            same.append(depth > 0 && sorted[depth - 1].shape.key == sorted[depth].shape.key)
+            depth += 1
+        }
+        self.placements = built
+        self.sameAsPrevious = same
+        rowsLeft = SolverSearch.pack(rows)
+        colsLeft = SolverSearch.pack(cols)
+    }
+
+    /// Counts as bytes of 8 + count; missing rows count 0.
+    static func pack(_ counts: [Int]) -> Int64 {
+        var packed: Int64 = 0
+        var index = 0
+        while index < 8 {
+            let value = index < counts.count ? counts[index] : 0
+            let byte = Int64(8 + value)
+            packed = packed | (byte << (8 * index))
+            index += 1
+        }
+        return packed
+    }
+
+    /// The input fits the packed representation (else the search reports no solution).
+    static func usable(size: Int, rows: [Int], cols: [Int]) -> Bool {
+        if size < 1 || size > 8 || rows.count != size || cols.count != size { return false }
+        for value in rows { if value < 0 || value > 8 { return false } }
+        for value in cols { if value < 0 || value > 8 { return false } }
+        return true
     }
 
     private var stopped: Bool {
         return count >= limit || nodes > budget
     }
 
+    /// True when no byte dropped below 8.
+    private static func allAtLeastEight(_ packed: Int64) -> Bool {
+        let spread = packed | (packed >> 1)
+        return (spread & eights) == eights
+    }
+
+    private func positionAt(_ depth: Int) -> Int {
+        let mask: Int64 = 63
+        return Int((chosen >> (6 * depth)) & mask)
+    }
+
     func run(_ depth: Int) {
         if stopped { return }
         if depth == order.count {
-            for value in rowsLeft { if value != 0 { return } }
-            for value in colsLeft { if value != 0 { return } }
+            if rowsLeft != SolverSearch.eights || colsLeft != SolverSearch.eights { return }
             count += 1
             if first == nil {
                 var solution = Array(repeating: 0, count: order.count)
                 var j = 0
                 while j < order.count {
-                    solution[order[j].index] = positions[j]
+                    solution[order[j].index] = positionAt(j)
                     j += 1
                 }
                 first = solution
             }
             return
         }
-        let shape = order[depth].shape
+        let options = placements[depth]
         // The second of two equal shapes only goes after the first.
-        var position = 0
-        if depth > 0 && order[depth - 1].shape.key == shape.key {
-            position = positions[depth - 1] + 1
+        var start = 0
+        if sameAsPrevious[depth] {
+            start = positionAt(depth - 1) + 1
         }
-        while position < size * size {
-            let row = position / size
-            let col = position % size
-            if row + shape.height <= size && col + shape.width <= size && isFree(shape, row, col) {
-                for cell in shape.cells {
-                    rowsLeft[row + cell.row] -= 1
-                    colsLeft[col + cell.col] -= 1
-                }
-                var fits = true
-                var i = 0
-                while i < size {
-                    if rowsLeft[i] < 0 || colsLeft[i] < 0 {
-                        fits = false
-                        break
+        let total = options.positions.count
+        let empty: Int64 = 0
+        let sixBits: Int64 = 63
+        var option = 0
+        while option < total {
+            let position = options.positions[option]
+            if position >= start {
+                let mask = options.masks[option]
+                if (occupied & mask) == empty {
+                    let rowTake = options.rowTakes[option]
+                    let colTake = options.colTakes[option]
+                    rowsLeft = rowsLeft - rowTake
+                    colsLeft = colsLeft - colTake
+                    if SolverSearch.allAtLeastEight(rowsLeft) && SolverSearch.allAtLeastEight(colsLeft) {
+                        nodes += 1
+                        occupied = occupied | mask
+                        let shift = 6 * depth
+                        chosen = (chosen & ~(sixBits << shift)) | (Int64(position) << shift)
+                        run(depth + 1)
+                        occupied = occupied & ~mask
                     }
-                    i += 1
+                    rowsLeft = rowsLeft + rowTake
+                    colsLeft = colsLeft + colTake
+                    if stopped { return }
                 }
-                if fits {
-                    nodes += 1
-                    mark(shape, row, col, true)
-                    positions[depth] = position
-                    run(depth + 1)
-                    mark(shape, row, col, false)
-                }
-                for cell in shape.cells {
-                    rowsLeft[row + cell.row] += 1
-                    colsLeft[col + cell.col] += 1
-                }
-                if stopped { return }
             }
-            position += 1
-        }
-    }
-
-    private func isFree(_ shape: PieceShape, _ row: Int, _ col: Int) -> Bool {
-        for cell in shape.cells {
-            if grid[(row + cell.row) * size + col + cell.col] { return false }
-        }
-        return true
-    }
-
-    private func mark(_ shape: PieceShape, _ row: Int, _ col: Int, _ filled: Bool) {
-        for cell in shape.cells {
-            grid[(row + cell.row) * size + col + cell.col] = filled
+            option += 1
         }
     }
 }

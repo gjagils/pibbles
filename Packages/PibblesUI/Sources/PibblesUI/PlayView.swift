@@ -12,19 +12,80 @@ struct LoadedPuzzle {
     var links: LinksPuzzle? = nil
 }
 
+/// Loads the puzzle off the main thread and runs the clock. A class, so the work does
+/// not depend on SwiftUI restarting a `.task` (on Android a `.task` that loaded the
+/// puzzle never delivered it, 22 November).
+@Observable
+final class PlayModel {
+    let kind: PuzzleKind
+    let day: Int
+    var loaded: LoadedPuzzle? = nil
+    var startedAt = Date()
+    var now = Date()
+    var finished = false
+    var started = false
+
+    init(kind: PuzzleKind, day: Int) {
+        self.kind = kind
+        self.day = day
+    }
+
+    /// Called when the screen appears; SwiftUI creates many PlayView values (one per
+    /// link), so nothing may start in `init`.
+    func start() {
+        if started { return }
+        started = true
+        let model = self
+        Task {
+            await model.load()
+        }
+        Task {
+            await model.tick()
+        }
+    }
+
+    func load() async {
+        let kindValue = kind
+        let dayValue = day
+        #if SKIP
+        let result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            PlayView.make(kind: kindValue, day: dayValue)
+        }
+        #else
+        let result = await Task.detached {
+            return PlayView.make(kind: kindValue, day: dayValue)
+        }.value
+        #endif
+        loaded = result
+        startedAt = Date()
+        now = startedAt
+    }
+
+    func tick() async {
+        while !finished {
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            if !finished { now = Date() }
+        }
+    }
+}
+
 /// Plays one puzzle of one day: clock, board, hints and the result. The first solve of a
 /// day is final (ProgressBook); playing it again afterwards does not change the result.
 struct PlayView: View {
     let kind: PuzzleKind
     let day: Int
     @State var store = GameStore.shared
-    @State var loaded: LoadedPuzzle? = nil
-    @State var startedAt = Date()
-    @State var now = Date()
+    @State var model: PlayModel
     @State var finishedMilliseconds: Int? = nil
     @State var finishedHints = 0
     @State var firstSolve = false
     @State var showRules = false
+
+    init(kind: PuzzleKind, day: Int) {
+        self.kind = kind
+        self.day = day
+        self._model = State(initialValue: PlayModel(kind: kind, day: day))
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -37,7 +98,7 @@ struct PlayView: View {
                     if let result = finishedMilliseconds {
                         resultCard(milliseconds: result)
                     }
-                    if let loaded {
+                    if let loaded = model.loaded {
                         board(loaded, width: min(geometry.size.width - 32.0, 460.0))
                     } else {
                         VStack(spacing: 12.0) {
@@ -55,15 +116,7 @@ struct PlayView: View {
         }
         .pibblesScreen()
         .navigationTitle(KindInfo.name(kind))
-        .task {
-            await load()
-        }
-        .task {
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                if finishedMilliseconds == nil { now = Date() }
-            }
-        }
+        .onAppear { model.start() }
     }
 
     var header: some View {
@@ -147,12 +200,13 @@ struct PlayView: View {
     }
 
     var elapsed: Int {
-        return Int(now.timeIntervalSince(startedAt) * 1000.0)
+        return Int(model.now.timeIntervalSince(model.startedAt) * 1000.0)
     }
 
     func solved(hints: Int, answer: String) {
         if finishedMilliseconds != nil { return }
-        let milliseconds = max(0, Int(Date().timeIntervalSince(startedAt) * 1000.0))
+        let milliseconds = max(0, Int(Date().timeIntervalSince(model.startedAt) * 1000.0))
+        model.finished = true
         finishedMilliseconds = milliseconds
         finishedHints = hints
         firstSolve = store.solved(kind: kind, day: day, milliseconds: milliseconds, hints: hints)
@@ -163,17 +217,6 @@ struct PlayView: View {
                 await ScoreUploader.submit(kind: kindValue, day: dayValue, milliseconds: milliseconds, hints: hints, answer: answer)
             }
         }
-    }
-
-    /// Generates the puzzle. Generation takes milliseconds (Blocks on Sunday up to about half
-    /// a second on an older phone), so it runs here after one frame with the spinner.
-    /// `Task.detached` never delivered its result in Skip's Android build (22 November).
-    func load() async {
-        if loaded != nil { return }
-        try? await Task.sleep(nanoseconds: 50_000_000)
-        loaded = PlayView.make(kind: kind, day: day)
-        startedAt = Date()
-        now = startedAt
     }
 
     static func make(kind: PuzzleKind, day: Int) -> LoadedPuzzle {

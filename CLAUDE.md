@@ -20,6 +20,10 @@ regels van de eerste puzzel (Randsom, werknaam), weekritme, reeks en jokers, opz
 
 ```bash
 swift test --package-path Packages/PibblesCore   # Core-tests: Swift en, via Skip, Kotlin
+(cd iOS && xcodegen)                             # Xcode-project genereren (iOS/project.yml)
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+(cd Android && ./gradlew assembleDebug)          # Android (draait eerst swift build van de UI)
+(cd server && npm install && npm test)           # Worker-tests; npx wrangler dev voor lokaal
 (cd prototype && node t.js)                      # prototype: generator per weekdag meten
 ```
 
@@ -32,3 +36,24 @@ swift test --package-path Packages/PibblesCore   # Core-tests: Swift en, via Ski
 - **Swifts `Int` is in Kotlin 32 bits** en Kotlin loopt stil over waar Swift stopt.
   32-bits rekenwerk (de randomgenerator) staat daarom in `Int64` met een masker.
 - **Een `[Int]` doorgeven waar `[Int?]` gevraagd is** compileert in Swift, niet in Kotlin.
+- **Een array die een klasse vasthoudt (`var` property) wordt bij elke schrijfactie gekopieerd**
+  (Skip zet er `sref()` in de getter en setter). In een zoeklus maakte dat de Blocks-oplosser op
+  Android honderd keer trager (16 s voor een zondagpuzzel). Houd zoektoestand in lokale
+  variabelen of in `Int64`-getallen (`Solver.swift`), en maak vaste tabellen `let`.
+- **`Task.detached { … }.value` levert in de Android-build niets op.** Zwaar werk gaat daar via
+  `kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { … }` in `#if SKIP`
+  (`PlayModel.load`).
+- **Start geen werk in de `init` van een view of in `State(initialValue:)`**: SwiftUI maakt
+  views vaak opnieuw aan (elke `NavigationLink`-bestemming). Start bij `onAppear`.
+- **Niet elk SF Symbol heeft een Android-tegenhanger**: `star` wordt een waarschuwingsdriehoek,
+  `star.fill` werkt. Zie de tabel in SkipUI `Image.swift`; liever eigen vormen (`Icons.swift`).
+- **`.contentShape` en `.monospacedDigit()` bestaan niet in SkipUI.**
+- **`Long shl Long` bestaat niet in Kotlin**: schuif een `Int64` over een `Int` (`one << square`),
+  en vergelijk een `Int64` met een getypte nul (`let empty: Int64 = 0`).
+
+## Emulator
+
+Een traag of hangend Android-toestel (ANR's, ook bij systeemapps) kwam door de Mac: swap vol en
+de emulator met software-rendering. Start hem met
+`emulator -avd Medium_Phone_API_36.1 -gpu host -memory 2048 -cores 4` en test ook met
+`assembleRelease`; een debug-build van Compose is veel trager.
