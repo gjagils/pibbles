@@ -13,7 +13,7 @@ val hasUploadKey = uploadStoreFile.exists() && uploadStorePassword != null && up
 
 android {
     namespace = "app.pibbles.android"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "app.pibbles"

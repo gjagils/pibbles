@@ -38,15 +38,15 @@ struct BlocksBoardView: View {
         let counts = play.counts
         return VStack(spacing: 4.0) {
             HStack(spacing: 4.0) {
-                ForEach(0..<puzzle.size) { col in
+                ForEach(0..<puzzle.size, id: \.self) { col in
                     countLabel(target: puzzle.cols[col], current: counts.cols[col])
                         .frame(width: cellSize, height: 28.0)
                 }
                 Spacer().frame(width: 32.0, height: 28.0)
             }
-            ForEach(0..<puzzle.size) { row in
+            ForEach(0..<puzzle.size, id: \.self) { row in
                 HStack(spacing: 4.0) {
-                    ForEach(0..<puzzle.size) { col in
+                    ForEach(0..<puzzle.size, id: \.self) { col in
                         square(row * puzzle.size + col)
                     }
                     countLabel(target: puzzle.rows[row], current: counts.rows[row])
@@ -86,7 +86,7 @@ struct BlocksBoardView: View {
                 .foregroundStyle(PibblesStyle.muted)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12.0) {
-                    ForEach(0..<puzzle.pieces.count) { index in
+                    ForEach(0..<puzzle.pieces.count, id: \.self) { index in
                         if play.positions[index] == nil {
                             pieceView(index)
                         }
@@ -107,9 +107,9 @@ struct BlocksBoardView: View {
         let unit = 16.0
         let isSelected = play.selected == index
         return VStack(spacing: 2.0) {
-            ForEach(0..<height) { row in
+            ForEach(0..<height, id: \.self) { row in
                 HStack(spacing: 2.0) {
-                    ForEach(0..<widthCells) { col in
+                    ForEach(0..<widthCells, id: \.self) { col in
                         RoundedRectangle(cornerRadius: 3.0)
                             .fill(cells.contains(Cell(row: row, col: col)) ? PibblesStyle.pieceColor(index) : Color.clear)
                             .frame(width: unit, height: unit)

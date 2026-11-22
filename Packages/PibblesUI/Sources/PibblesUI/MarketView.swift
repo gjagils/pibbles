@@ -115,7 +115,7 @@ struct KindWeekView: View {
                 .font(PibblesStyle.text(15.0, .semibold))
                 .foregroundStyle(PibblesStyle.muted)
             HStack(spacing: 6.0) {
-                ForEach(0..<7) { offset in
+                ForEach(0..<7, id: \.self) { offset in
                     dayTile(day: start + offset)
                 }
             }

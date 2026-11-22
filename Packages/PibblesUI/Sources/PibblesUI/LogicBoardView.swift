@@ -26,9 +26,9 @@ struct LogicBoardView: View {
         let conflicts = LogicRules.conflicts(puzzle, values: values)
         return VStack(spacing: 16.0) {
             VStack(spacing: 4.0) {
-                ForEach(0..<puzzle.size) { row in
+                ForEach(0..<puzzle.size, id: \.self) { row in
                     HStack(spacing: 4.0) {
-                        ForEach(0..<puzzle.size) { col in
+                        ForEach(0..<puzzle.size, id: \.self) { col in
                             square(row * puzzle.size + col, bad: conflicts.contains(row * puzzle.size + col))
                         }
                     }

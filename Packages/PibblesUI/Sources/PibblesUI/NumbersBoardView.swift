@@ -8,7 +8,7 @@ struct NumberPad: View {
 
     var body: some View {
         HStack(spacing: 8.0) {
-            ForEach(1..<(size + 1)) { value in
+            ForEach(1..<(size + 1), id: \.self) { value in
                 padButton("\(value)") { onNumber(value) }
             }
             padButton("⌫") { onNumber(0) }
@@ -67,9 +67,9 @@ struct NumbersBoardView: View {
         let n = puzzle.size
         return VStack(spacing: 16.0) {
             VStack(spacing: 0.0) {
-                ForEach(0..<n) { row in
+                ForEach(0..<n, id: \.self) { row in
                     HStack(spacing: 0.0) {
-                        ForEach(0..<n) { col in
+                        ForEach(0..<n, id: \.self) { col in
                             square(row * n + col, bad: conflicts.contains(row * n + col))
                             if col < n - 1 {
                                 Text(sign(row * n + col, row * n + col + 1, vertical: false))
@@ -81,7 +81,7 @@ struct NumbersBoardView: View {
                     }
                     if row < n - 1 {
                         HStack(spacing: 0.0) {
-                            ForEach(0..<n) { col in
+                            ForEach(0..<n, id: \.self) { col in
                                 Text(sign(row * n + col, row * n + col + n, vertical: true))
                                     .font(PibblesStyle.title(17.0))
                                     .foregroundStyle(PibblesStyle.orange)

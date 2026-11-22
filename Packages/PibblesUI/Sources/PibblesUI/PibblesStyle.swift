@@ -29,10 +29,14 @@ public enum PibblesStyle {
         return Font.system(size: size, weight: weight, design: .rounded)
     }
 
-    /// Piece colors on the Blocks board, by piece number.
+    public static let rose = Color("Rose", bundle: .module)
+    public static let mustard = Color("Mustard", bundle: .module)
+    public static let sky = Color("Sky", bundle: .module)
+
+    /// Piece and line colors by number: six that stay apart next to each other.
     public static func pieceColor(_ index: Int) -> Color {
-        let palette = [purple, orange, teal]
-        return palette[index % 3]
+        let palette = [purple, orange, teal, rose, sky, mustard, plum, sage]
+        return palette[index % palette.count]
     }
 
     public static func kindColor(_ kind: PuzzleKind) -> Color {

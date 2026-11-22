@@ -17,10 +17,10 @@ public struct RootView: View {
                 .tabItem { Label(T.s("Market", "Markt"), systemImage: "list.bullet") }
                 .tag(1)
             NavigationStack { RankingView() }
-                .tabItem { Label(T.s("Ranking", "Ranglijst"), systemImage: "star") }
+                .tabItem { Label(T.s("Ranking", "Ranglijst"), systemImage: "star.fill") }
                 .tag(2)
             NavigationStack { StatsView() }
-                .tabItem { Label(T.s("Stats", "Statistiek"), systemImage: "info.circle") }
+                .tabItem { Label(T.s("Stats", "Statistiek"), systemImage: "chart.bar.xaxis") }
                 .tag(3)
         }
         .tint(PibblesStyle.purple)

@@ -7,6 +7,8 @@ struct LoadedPuzzle {
     var logic: LogicPuzzle? = nil
     var patterns: PatternsPuzzle? = nil
     var numbers: NumbersPuzzle? = nil
+    var sums: SumsPuzzle? = nil
+    var stars: StarsPuzzle? = nil
 }
 
 /// Plays one puzzle of one day: clock, board, hints and the result. The first solve of a
@@ -129,6 +131,10 @@ struct PlayView: View {
             PatternsBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.numbers {
             NumbersBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+        } else if let puzzle = loaded.stars {
+            StarsBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+        } else if let puzzle = loaded.sums {
+            SumsBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else {
             Text(T.s("This puzzle is coming soon.", "Deze puzzel komt binnenkort."))
                 .font(PibblesStyle.text(15.0))
@@ -156,14 +162,13 @@ struct PlayView: View {
         }
     }
 
+    /// Generates the puzzle. Generation takes milliseconds (Blocks on Sunday up to about half
+    /// a second on an older phone), so it runs here after one frame with the spinner.
+    /// `Task.detached` never delivered its result in Skip's Android build (22 November).
     func load() async {
         if loaded != nil { return }
-        let kindValue = kind
-        let dayValue = day
-        let result = await Task.detached {
-            return PlayView.make(kind: kindValue, day: dayValue)
-        }.value
-        loaded = result
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        loaded = PlayView.make(kind: kind, day: day)
         startedAt = Date()
         now = startedAt
     }
@@ -175,6 +180,8 @@ struct PlayView: View {
         case PuzzleKind.logic: result.logic = Daily.logic(day: day)
         case PuzzleKind.patterns: result.patterns = Daily.patterns(day: day)
         case PuzzleKind.numbers: result.numbers = Daily.numbers(day: day)
+        case PuzzleKind.stars: result.stars = StarsGenerator.generate(weekday: PuzzleCalendar.weekday(day: day), seed: PuzzleKind.stars.seed(dateKey: PuzzleCalendar.dateKey(day: day)))
+        case PuzzleKind.sums: result.sums = SumsGenerator.generate(weekday: PuzzleCalendar.weekday(day: day), seed: PuzzleKind.sums.seed(dateKey: PuzzleCalendar.dateKey(day: day)))
         default: break
         }
         return result

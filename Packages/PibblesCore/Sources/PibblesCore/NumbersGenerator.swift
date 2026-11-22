@@ -156,7 +156,7 @@ public enum NumbersGenerator {
     }
 
     /// Fisher-Yates from the back, with `nextInt`.
-    static func shuffled<T>(_ list: [T], _ random: SeededRandom) -> [T] {
+    public static func shuffled<T>(_ list: [T], _ random: SeededRandom) -> [T] {
         var result = list
         var i = result.count - 1
         while i > 0 {

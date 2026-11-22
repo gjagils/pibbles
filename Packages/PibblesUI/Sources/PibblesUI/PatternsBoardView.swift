@@ -38,7 +38,7 @@ struct PatternsBoardView: View {
             VStack(spacing: 3.0) {
                 HStack(alignment: .bottom, spacing: 3.0) {
                     Spacer().frame(width: clueWidth, height: clueHeight)
-                    ForEach(0..<puzzle.size) { col in
+                    ForEach(0..<puzzle.size, id: \.self) { col in
                         VStack(spacing: 0.0) {
                             ForEach(clueText(puzzle.colClues[col]), id: \.self) { item in
                                 Text(item)
@@ -50,7 +50,7 @@ struct PatternsBoardView: View {
                         .frame(width: cellSize, height: clueHeight, alignment: .bottom)
                     }
                 }
-                ForEach(0..<puzzle.size) { row in
+                ForEach(0..<puzzle.size, id: \.self) { row in
                     HStack(spacing: 3.0) {
                         Text(clueText(puzzle.rowClues[row]).joined(separator: " "))
                             .font(PibblesStyle.text(13.0, .semibold))
@@ -59,7 +59,7 @@ struct PatternsBoardView: View {
                             .minimumScaleFactor(0.6)
                             .frame(width: clueWidth - 6.0, height: cellSize, alignment: .trailing)
                             .padding(.trailing, 6.0)
-                        ForEach(0..<puzzle.size) { col in
+                        ForEach(0..<puzzle.size, id: \.self) { col in
                             square(row * puzzle.size + col)
                         }
                     }
