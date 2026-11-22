@@ -1,0 +1,15 @@
+{
+  "name": "pibbles-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "migrate:local": "wrangler d1 migrations apply pibbles --local",
+    "migrate": "wrangler d1 migrations apply pibbles --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^4.166.0"
+  }
+}

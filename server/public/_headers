@@ -1,0 +1,9 @@
+# Security headers for the static site (Workers static assets). No scripts at
+# all; styles come from /styles.css plus a few inline style attributes.
+# /api/* and /admin/* are answered by the Worker, which sets its own headers.
+/*
+  Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000
