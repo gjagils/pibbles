@@ -2,7 +2,7 @@ import Foundation
 
 /// A puzzle: the player drags the `pieces` onto a `size` × `size` board until every
 /// row and column holds the number of filled squares given in `rows` and `cols`.
-public struct Puzzle: Hashable, Sendable {
+public struct Puzzle: Hashable, Codable, Sendable {
     public let size: Int
     /// Shape keys (`ShapeCatalog`), in the order the player gets them.
     public let pieces: [String]
@@ -10,9 +10,13 @@ public struct Puzzle: Hashable, Sendable {
     public let cols: [Int]
     /// Per piece the position (row × size + col) of the top left corner of its bounding box.
     public let solution: [Int]
-    /// How many boards the generator tried, and how much work the solver did.
-    public let attempts: Int
-    public let nodes: Int
+    /// How many boards the generator tried, and how much work the solver did. Not in JSON.
+    public var attempts: Int = 0
+    public var nodes: Int = 0
+
+    enum CodingKeys: String, CodingKey {
+        case size, pieces, rows, cols, solution
+    }
 
     public init(size: Int, pieces: [String], rows: [Int], cols: [Int], solution: [Int],
                 attempts: Int, nodes: Int) {
