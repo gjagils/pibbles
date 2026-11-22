@@ -1,0 +1,113 @@
+<title>Randsom</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+/* Layout: one narrow column like a phone screen; the board is the hero, tray directly under the thumb. */
+:root{
+  --bg:#eaeef5; --surface:#ffffff; --ink:#1a2033; --muted:#5f6a85; --line:#d3d9e6; --cell:#dce2ed;
+  --ok:#17875b; --bad:#cf3d36; --accent:#2f4bd8; --on-accent:#ffffff;
+  --p0:#ef5d5a; --p1:#f6922a; --p2:#e2ad2b; --p3:#35ab6c; --p4:#22b3a6; --p5:#3a86ff; --p6:#8367c7; --p7:#de62a8;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cellpx:48px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12151f; --surface:#1c2030; --ink:#eef1f8; --muted:#9aa4bd; --line:#2f3549; --cell:#272c3e;
+  --ok:#3fc48d; --bad:#ff6f66; --accent:#7f97ff; --on-accent:#10131d; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#12151f; --surface:#1c2030; --ink:#eef1f8; --muted:#9aa4bd; --line:#2f3549; --cell:#272c3e;
+  --ok:#3fc48d; --bad:#ff6f66; --accent:#7f97ff; --on-accent:#10131d; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-user-select:none;user-select:none}
+.app{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:800;font-size:2.1rem;line-height:1;margin:0;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:.875rem;margin-top:4px}
+.timer{font-family:var(--display);font-weight:700;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.week button{font:500 .8rem var(--body);color:var(--muted);background:var(--cell);border:2px solid transparent;border-radius:10px;padding:6px 0 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+.week button b{font:700 .95rem var(--display);color:var(--ink)}
+.week button small{font-size:.7rem;font-variant-numeric:tabular-nums}
+.week button[aria-pressed="true"]{background:var(--surface);border-color:var(--line)}
+.week button.today{border-color:var(--accent)}
+.week button.solved small{color:var(--ok);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.9rem;color:var(--muted)}
+.chips b{font:700 1rem var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.note{font-size:.85rem;color:var(--muted);margin:0}
+.note:empty{display:none}
+h2{font:800 1.15rem var(--display);margin:0}
+.lb{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.lb ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.lb li{display:grid;grid-template-columns:1.6em minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.lb li:first-child{border-top:0}
+.lb .rk{font:700 .95rem var(--display);color:var(--muted)}
+.lb .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb .nm small{color:var(--muted);margin-left:6px}
+.lb .tm{font:700 1rem var(--display)}
+.lb li.me .nm{font-weight:700}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.boardwrap{display:flex;justify-content:center}
+.board{position:relative;display:grid;grid-template-columns:repeat(var(--n1),var(--cellpx));grid-auto-rows:var(--cellpx)}
+.clue{display:flex;align-items:center;justify-content:center}
+.clue span{font-family:var(--display);font-weight:700;font-size:calc(var(--cellpx)*.42);font-variant-numeric:tabular-nums;
+  width:72%;height:72%;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--ink);transition:background .15s,color .15s}
+.clue.done span{background:var(--ok);color:var(--surface)}
+.clue.over span{background:var(--bad);color:var(--surface)}
+.cell{padding:2px}
+.cell i{display:block;width:100%;height:100%;border-radius:7px;background:var(--cell)}
+.layer{position:absolute;left:var(--cellpx);top:var(--cellpx);right:0;bottom:0;pointer-events:none}
+.piece{position:relative;touch-action:none;cursor:grab;flex:none}
+.piece b{position:absolute;padding:2px;pointer-events:auto}
+.piece b::after{content:"";display:block;width:100%;height:100%;border-radius:7px;background:var(--pc);
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.16), inset 0 2px 0 rgba(255,255,255,.28)}
+.layer .piece{position:absolute;pointer-events:none}
+.piece.shadow b::after{opacity:.35;box-shadow:none}
+.piece.shadow b{pointer-events:none}
+.piece.drag{position:fixed;z-index:50;pointer-events:none;cursor:grabbing;filter:drop-shadow(0 8px 10px rgba(0,0,0,.25))}
+.piece.drag b{pointer-events:none}
+.tray{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;min-height:118px;
+  display:flex;flex-wrap:wrap;gap:14px 18px;align-items:center;justify-content:center}
+.slot.empty .piece{visibility:hidden}
+.msg{text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.msg strong{font-family:var(--display);font-size:1.35rem;font-weight:800}
+.msg p{margin:0;color:var(--muted);font-size:.95rem}
+.msg .share{font-variant-numeric:tabular-nums;color:var(--ink);-webkit-user-select:text;user-select:text}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.btn{font:700 .9rem var(--body);border-radius:11px;padding:11px 8px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.rules{color:var(--muted);font-size:.9rem;margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px}
+.rules b{color:var(--ink);font-weight:700}
+.board.won{animation:pop .5s ease}
+@keyframes pop{40%{transform:scale(1.03)}}
+@media (prefers-reduced-motion:reduce){.board.won{animation:none}.clue span{transition:none}}
+</style>
+<div class="app">
+  <header>
+    <div><h1>Randsom</h1><div class="sub" id="sub"></div></div>
+    <div class="timer" id="timer" aria-label="Tijd">0:00</div>
+  </header>
+  <div class="chips" id="chips"></div>
+  <div class="week" id="week" role="group" aria-label="Week"></div>
+  <p class="note" id="mode"></p>
+  <div class="boardwrap"><div class="board" id="board"></div></div>
+  <div class="tray" id="tray"></div>
+  <div class="actions">
+    <button class="btn" id="reset">Leegmaken</button>
+    <button class="btn" id="hint">Hint</button>
+    <button class="btn" id="practice">Oefenpuzzel</button>
+  </div>
+  <section class="lb" aria-labelledby="lbh">
+    <h2 id="lbh">Ranglijst vandaag</h2>
+    <ol id="lb"></ol>
+    <p class="note" id="lbnote">Ranglijst laden…</p>
+  </section>
+  <ul class="rules">
+    <li>Sleep <b>alle blokken</b> het veld in. Draaien kan niet.</li>
+    <li>Het getal bij een rij of kolom is het <b>aantal gevulde vakjes</b> daarin. Er is precies één oplossing.</li>
+    <li>Elke dag één puzzel: <b>maandag</b> de makkelijkste, <b>zondag</b> de moeilijkste.</li>
+    <li>Elke opgeloste dag telt voor je <b>reeks</b>. Per 5 dagen reeks krijg je een <b>joker</b> (maximaal 3). Een joker vangt een gemiste dag op.</li>
+    <li>Ranglijst: snelste tijd wint, elke hint kost <b>30 seconden</b>.</li>
+  </ul>
+</div>

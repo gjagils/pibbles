@@ -1,0 +1,380 @@
+<title>Randsom</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+/* Layout: one narrow column like a phone screen; the board is the hero, tray directly under the thumb. */
+:root{
+  --bg:#eaeef5; --surface:#ffffff; --ink:#1a2033; --muted:#5f6a85; --line:#d3d9e6; --cell:#dce2ed;
+  --ok:#17875b; --bad:#cf3d36; --accent:#2f4bd8; --on-accent:#ffffff;
+  --p0:#ef5d5a; --p1:#f6922a; --p2:#e2ad2b; --p3:#35ab6c; --p4:#22b3a6; --p5:#3a86ff; --p6:#8367c7; --p7:#de62a8;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cellpx:48px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12151f; --surface:#1c2030; --ink:#eef1f8; --muted:#9aa4bd; --line:#2f3549; --cell:#272c3e;
+  --ok:#3fc48d; --bad:#ff6f66; --accent:#7f97ff; --on-accent:#10131d; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#12151f; --surface:#1c2030; --ink:#eef1f8; --muted:#9aa4bd; --line:#2f3549; --cell:#272c3e;
+  --ok:#3fc48d; --bad:#ff6f66; --accent:#7f97ff; --on-accent:#10131d; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-user-select:none;user-select:none}
+.app{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:800;font-size:2.1rem;line-height:1;margin:0;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:.875rem;margin-top:4px}
+.timer{font-family:var(--display);font-weight:700;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.week button{font:500 .8rem var(--body);color:var(--muted);background:var(--cell);border:2px solid transparent;border-radius:10px;padding:6px 0 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+.week button b{font:700 .95rem var(--display);color:var(--ink)}
+.week button small{font-size:.7rem;font-variant-numeric:tabular-nums}
+.week button[aria-pressed="true"]{background:var(--surface);border-color:var(--line)}
+.week button.today{border-color:var(--accent)}
+.week button.solved small{color:var(--ok);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.9rem;color:var(--muted)}
+.chips b{font:700 1rem var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.note{font-size:.85rem;color:var(--muted);margin:0}
+.note:empty{display:none}
+h2{font:800 1.15rem var(--display);margin:0}
+.lb{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.lb ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.lb li{display:grid;grid-template-columns:1.6em minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.lb li:first-child{border-top:0}
+.lb .rk{font:700 .95rem var(--display);color:var(--muted)}
+.lb .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb .nm small{color:var(--muted);margin-left:6px}
+.lb .tm{font:700 1rem var(--display)}
+.lb li.me .nm{font-weight:700}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.boardwrap{display:flex;justify-content:center}
+.board{position:relative;display:grid;grid-template-columns:repeat(var(--n1),var(--cellpx));grid-auto-rows:var(--cellpx)}
+.clue{display:flex;align-items:center;justify-content:center}
+.clue span{font-family:var(--display);font-weight:700;font-size:calc(var(--cellpx)*.42);font-variant-numeric:tabular-nums;
+  width:72%;height:72%;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--ink);transition:background .15s,color .15s}
+.clue.done span{background:var(--ok);color:var(--surface)}
+.clue.over span{background:var(--bad);color:var(--surface)}
+.cell{padding:2px}
+.cell i{display:block;width:100%;height:100%;border-radius:7px;background:var(--cell)}
+.layer{position:absolute;left:var(--cellpx);top:var(--cellpx);right:0;bottom:0;pointer-events:none}
+.piece{position:relative;touch-action:none;cursor:grab;flex:none}
+.piece b{position:absolute;padding:2px;pointer-events:auto}
+.piece b::after{content:"";display:block;width:100%;height:100%;border-radius:7px;background:var(--pc);
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.16), inset 0 2px 0 rgba(255,255,255,.28)}
+.layer .piece{position:absolute;pointer-events:none}
+.piece.shadow b::after{opacity:.35;box-shadow:none}
+.piece.shadow b{pointer-events:none}
+.piece.drag{position:fixed;z-index:50;pointer-events:none;cursor:grabbing;filter:drop-shadow(0 8px 10px rgba(0,0,0,.25))}
+.piece.drag b{pointer-events:none}
+.tray{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;min-height:118px;
+  display:flex;flex-wrap:wrap;gap:14px 18px;align-items:center;justify-content:center}
+.slot.empty .piece{visibility:hidden}
+.msg{text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.msg strong{font-family:var(--display);font-size:1.35rem;font-weight:800}
+.msg p{margin:0;color:var(--muted);font-size:.95rem}
+.msg .share{font-variant-numeric:tabular-nums;color:var(--ink);-webkit-user-select:text;user-select:text}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.btn{font:700 .9rem var(--body);border-radius:11px;padding:11px 8px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.rules{color:var(--muted);font-size:.9rem;margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px}
+.rules b{color:var(--ink);font-weight:700}
+.board.won{animation:pop .5s ease}
+@keyframes pop{40%{transform:scale(1.03)}}
+@media (prefers-reduced-motion:reduce){.board.won{animation:none}.clue span{transition:none}}
+</style>
+<div class="app">
+  <header>
+    <div><div class="sub" style="margin:0 0 2px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.72rem">Pibbles</div><h1>Randsom</h1><div class="sub" id="sub"></div></div>
+    <div class="timer" id="timer" aria-label="Tijd">0:00</div>
+  </header>
+  <div class="chips" id="chips"></div>
+  <div class="week" id="week" role="group" aria-label="Week"></div>
+  <p class="note" id="mode"></p>
+  <div class="boardwrap"><div class="board" id="board"></div></div>
+  <div class="tray" id="tray"></div>
+  <div class="actions">
+    <button class="btn" id="reset">Leegmaken</button>
+    <button class="btn" id="hint">Hint</button>
+    <button class="btn" id="practice">Oefenpuzzel</button>
+  </div>
+  <section class="lb" aria-labelledby="lbh">
+    <h2 id="lbh">Ranglijst vandaag</h2>
+    <ol id="lb"></ol>
+    <p class="note" id="lbnote">Ranglijst laden…</p>
+  </section>
+  <ul class="rules">
+    <li>Sleep <b>alle blokken</b> het veld in. Draaien kan niet.</li>
+    <li>Het getal bij een rij of kolom is het <b>aantal gevulde vakjes</b> daarin. Er is precies één oplossing.</li>
+    <li>Elke dag één puzzel: <b>maandag</b> de makkelijkste, <b>zondag</b> de moeilijkste.</li>
+    <li>Elke opgeloste dag telt voor je <b>reeks</b>. Per 5 dagen reeks krijg je een <b>joker</b> (maximaal 3). Een joker vangt een gemiste dag op.</li>
+    <li>Ranglijst: snelste tijd wint, elke hint kost <b>30 seconden</b>.</li>
+  </ul>
+</div>
+<script>
+// ---- Puzzle logic (pure, no DOM) ----
+const SHAPES = {
+  I2:[[0,0],[0,1]], I2v:[[0,0],[1,0]],
+  I3:[[0,0],[0,1],[0,2]], I3v:[[0,0],[1,0],[2,0]],
+  L3a:[[0,0],[1,0],[1,1]], L3b:[[0,0],[0,1],[1,0]], L3c:[[0,0],[0,1],[1,1]], L3d:[[0,1],[1,0],[1,1]],
+  O4:[[0,0],[0,1],[1,0],[1,1]],
+  I4:[[0,0],[0,1],[0,2],[0,3]], I4v:[[0,0],[1,0],[2,0],[3,0]],
+  L4a:[[0,0],[1,0],[2,0],[2,1]], L4b:[[0,0],[0,1],[0,2],[1,0]], L4c:[[0,0],[0,1],[1,1],[2,1]], L4d:[[0,2],[1,0],[1,1],[1,2]],
+  J4a:[[0,1],[1,1],[2,0],[2,1]], J4b:[[0,0],[1,0],[1,1],[1,2]], J4c:[[0,0],[0,1],[1,0],[2,0]], J4d:[[0,0],[0,1],[0,2],[1,2]],
+  T4a:[[0,0],[0,1],[0,2],[1,1]], T4b:[[0,1],[1,0],[1,1],[2,1]], T4c:[[0,1],[1,0],[1,1],[1,2]], T4d:[[0,0],[1,0],[1,1],[2,0]],
+  S4a:[[0,1],[0,2],[1,0],[1,1]], S4b:[[0,0],[1,0],[1,1],[2,1]],
+  Z4a:[[0,0],[0,1],[1,1],[1,2]], Z4b:[[0,1],[1,0],[1,1],[2,0]],
+};
+const SHAPE_KEYS = Object.keys(SHAPES);
+// Weekritme: maandag makkelijk, zondag het moeilijkst.
+const WEEK = [
+  { n:5, pieces:4 }, { n:5, pieces:5 }, { n:6, pieces:5 }, { n:6, pieces:6 },
+  { n:6, pieces:7 }, { n:7, pieces:7 }, { n:7, pieces:8 },
+];
+const DAYS = ['ma','di','wo','do','vr','za','zo'];
+// ---- Streak rules (pure) ----
+const JOKER_EVERY = 5, JOKER_MAX = 3;
+function streakAfterSolve(s, day){
+  if(s.lastDay===day) return s;
+  let streak=s.streak||0, jokers=s.jokers||0;
+  if(s.lastDay==null) streak=0;
+  else { const gap=day-s.lastDay-1; if(gap>0){ if(gap<=jokers) jokers-=gap; else streak=0; } }
+  streak++; if(streak%JOKER_EVERY===0 && jokers<JOKER_MAX) jokers++;
+  return {streak, jokers, lastDay:day, best:Math.max(s.best||0,streak)};
+}
+function streakNow(s, day){
+  const jokers=s.jokers||0;
+  if(s.lastDay==null) return {streak:0, jokers, used:0, lost:false};
+  const gap=Math.max(0,day-s.lastDay-1);
+  if(gap===0) return {streak:s.streak, jokers, used:0, lost:false};
+  if(gap<=jokers) return {streak:s.streak, jokers:jokers-gap, used:gap, lost:false};
+  return {streak:0, jokers, used:0, lost:(s.streak||0)>0};
+}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function dims(key){const c=SHAPES[key];let h=0,w=0;for(const[r,q]of c){if(r+1>h)h=r+1;if(q+1>w)w=q+1}return{h,w}}
+
+// Count solutions (up to `limit`). Identical shapes are interchangeable.
+function countSolutions(n, shapeKeys, rows, cols, limit, budget){
+  const order = shapeKeys.map((k,i)=>({k,i})).sort((a,b)=>SHAPES[b.k].length-SHAPES[a.k].length || (a.k<b.k?-1:a.k>b.k?1:0));
+  const grid = new Uint8Array(n*n), R = rows.slice(), C = cols.slice();
+  let count = 0, nodes = 0, first = null; const pos = new Array(order.length);
+  function rec(d){
+    if(count>=limit || nodes>budget) return;
+    if(d===order.length){ if(R.every(x=>x===0)&&C.every(x=>x===0)){count++; if(!first){first=new Array(order.length); order.forEach((o,j)=>first[o.i]=pos[j]);}} return; }
+    const key=order[d].k, cells=SHAPES[key], {h,w}=dims(key);
+    const start = (d>0 && order[d-1].k===key) ? pos[d-1]+1 : 0;
+    for(let p=start;p<n*n;p++){
+      const r0=(p/n)|0, c0=p%n; if(r0+h>n||c0+w>n) continue;
+      let ok=true;
+      for(const[dr,dc]of cells){ if(grid[(r0+dr)*n+c0+dc]){ok=false;break} }
+      if(!ok) continue;
+      for(const[dr,dc]of cells){ R[r0+dr]--; C[c0+dc]--; }
+      for(let i=0;i<n;i++) if(R[i]<0||C[i]<0){ok=false;break}
+      if(ok){ nodes++; for(const[dr,dc]of cells) grid[(r0+dr)*n+c0+dc]=1; pos[d]=p; rec(d+1); for(const[dr,dc]of cells) grid[(r0+dr)*n+c0+dc]=0; }
+      for(const[dr,dc]of cells){ R[r0+dr]++; C[c0+dc]++; }
+      if(count>=limit || nodes>budget) return;
+    }
+  }
+  rec(0);
+  return {count, nodes, exhausted: nodes>budget, first};
+}
+
+function generate(L, seedStr){
+  const n=L.n, rnd = mulberry32(hashStr(n+'x'+L.pieces+'|'+seedStr));
+  for(let attempt=0; attempt<20000; attempt++){
+    const grid=new Uint8Array(n*n), keys=[], at=[]; let fail=false;
+    for(let i=0;i<L.pieces && !fail;i++){
+      let placed=false;
+      for(let t=0;t<40 && !placed;t++){
+        const key=SHAPE_KEYS[(rnd()*SHAPE_KEYS.length)|0];
+        if(SHAPES[key].length<3 && rnd()<0.6) continue;
+        const {h,w}=dims(key), r0=(rnd()*(n-h+1))|0, c0=(rnd()*(n-w+1))|0;
+        if(SHAPES[key].some(([dr,dc])=>grid[(r0+dr)*n+c0+dc])) continue;
+        SHAPES[key].forEach(([dr,dc])=>grid[(r0+dr)*n+c0+dc]=1); keys.push(key); at.push(r0*n+c0); placed=true;
+      }
+      if(!placed) fail=true;
+    }
+    if(fail) continue;
+    const cnt={}; let dup=false; for(const k of keys){cnt[k]=(cnt[k]||0)+1; if(cnt[k]>2) dup=true}
+    if(dup) continue;
+    const rows=new Array(n).fill(0), cols=new Array(n).fill(0);
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++) if(grid[r*n+c]){rows[r]++;cols[c]++}
+    if(rows.concat(cols).filter(x=>x===0).length>(L.pieces<5?1:0)) continue;
+    const res=countSolutions(n,keys,rows,cols,2,60000);
+    if(res.count===1 && !res.exhausted) return {n,pieces:keys,rows,cols,solution:at,attempts:attempt+1,nodes:res.nodes};
+  }
+  return null;
+}
+// ---- UI ----
+const $=id=>document.getElementById(id);
+const pad=x=>String(x).padStart(2,'0');
+const dayIdx=d=>Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);
+const keyOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const now=new Date(), TODAY=dayIdx(now), LAUNCH=dayIdx(new Date(2026,10,22));
+const WD=(now.getDay()+6)%7;                       // monday = 0
+const dateOfWd=w=>new Date(now.getFullYear(),now.getMonth(),now.getDate()+w-WD);
+const HINT_PENALTY=30000;
+// mode: 'daily' counts for streak and leaderboard; 'preview' (another weekday) and 'practice' do not.
+let mode='daily', viewWd=WD, practiceNo=0, P=null, placed=[], hints=0, startAt=0, endAt=0, tick=0, cell=48, drag=null;
+// player state: streak fields + today's result + recently solved days
+let S={streak:0,jokers:0,lastDay:null,best:0,day:null,ms:0,hints:0,score:0,solved:[]};
+let db=null, user=null, uid=null, saveNote='';
+try{const r=JSON.parse(localStorage.getItem('randsom-state')||'null'); if(r&&typeof r==='object') S=Object.assign(S,r)}catch(e){}
+const saveLocal=()=>{try{localStorage.setItem('randsom-state',JSON.stringify(S))}catch(e){}};
+const solvedToday=()=>S.lastDay===TODAY;
+
+function pieceEl(i,size){
+  const key=P.pieces[i], d=dims(key), el=document.createElement('div');
+  el.className='piece'; el.style.width=d.w*size+'px'; el.style.height=d.h*size+'px'; el.style.setProperty('--pc','var(--p'+(i%8)+')');
+  for(const[r,c]of SHAPES[key]){const b=document.createElement('b');b.style.cssText='left:'+c*size+'px;top:'+r*size+'px;width:'+size+'px;height:'+size+'px';el.appendChild(b)}
+  el.dataset.i=i; return el;
+}
+function occupancy(skip){const n=P.n,g=new Int8Array(n*n).fill(-1);placed.forEach((p,i)=>{if(p<0||i===skip)return;for(const[r,c]of SHAPES[P.pieces[i]])g[p+r*n+c]=i});return g}
+function fits(i,r0,c0,g){const n=P.n,d=dims(P.pieces[i]);if(r0<0||c0<0||r0+d.h>n||c0+d.w>n)return false;return SHAPES[P.pieces[i]].every(([r,c])=>g[(r0+r)*n+c0+c]<0)}
+function sums(){const n=P.n,R=new Array(n).fill(0),C=new Array(n).fill(0),g=occupancy(-1);for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(g[r*n+c]>=0){R[r]++;C[c]++}return{R,C}}
+function solved(){if(placed.some(p=>p<0))return false;const s=sums();return s.R.every((x,i)=>x===P.rows[i])&&s.C.every((x,i)=>x===P.cols[i])}
+function fmt(ms){const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+pad(s%60)}
+const hintTxt=h=>h?h+(h===1?' hint':' hints'):'zonder hints';
+
+function sizeCell(){const w=Math.min($('board').parentElement.clientWidth,460);cell=Math.max(26,Math.min(56,Math.floor(w/(P.n+1))));document.documentElement.style.setProperty('--cellpx',cell+'px')}
+function load(){
+  clearInterval(tick); hints=0; startAt=0; endAt=0;
+  const d=dateOfWd(viewWd);
+  P = mode==='practice' ? generate(WEEK[WD],'oefen-'+Date.now()+'-'+practiceNo) : generate(WEEK[viewWd],keyOf(d));
+  placed=P.pieces.map(()=>-1);
+  if(mode==='daily' && solvedToday()){ placed=P.solution.slice(); hints=S.hints; endAt=Date.now(); startAt=endAt-S.ms; }
+  $('timer').textContent=endAt?fmt(endAt-startAt):'0:00';
+  $('sub').textContent = mode==='practice' ? 'Oefenpuzzel '+practiceNo
+    : d.toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'})+(dayIdx(d)>=LAUNCH?' · nr. '+(dayIdx(d)-LAUNCH+1):'');
+  $('mode').textContent = mode==='daily' ? '' : mode==='practice' ? 'Oefenpuzzel op het niveau van vandaag. Telt niet mee voor reeks of ranglijst.'
+    : 'Voorproef van een andere dag. Telt niet mee voor reeks of ranglijst.';
+  renderWeek(); renderChips(); render();
+}
+function renderChips(){
+  const v=streakNow(S,TODAY), c=$('chips');
+  c.innerHTML='<span>Reeks <b>'+v.streak+'</b></span><span>Jokers <b>'+v.jokers+'</b></span><span>Beste reeks <b>'+(S.best||0)+'</b></span>';
+  const n=document.createElement('span');
+  n.textContent = v.used ? (v.used===1?'1 joker ingezet voor een gemiste dag':v.used+' jokers ingezet voor gemiste dagen') : v.lost ? 'Reeks verbroken, begin vandaag opnieuw' : '';
+  if(n.textContent)c.appendChild(n);
+}
+function renderWeek(){
+  const w=$('week'); w.innerHTML='';
+  WEEK.forEach((L,i)=>{const b=document.createElement('button'), di=dayIdx(dateOfWd(i)), ok=(S.solved||[]).includes(di);
+    b.className=(i===WD?'today ':'')+(ok?'solved':''); b.setAttribute('aria-pressed',mode!=='practice'&&i===viewWd);
+    b.setAttribute('aria-label',dateOfWd(i).toLocaleDateString('nl-NL',{weekday:'long'})+', '+L.n+' bij '+L.n+', '+L.pieces+' blokken'+(ok?', opgelost':''));
+    b.innerHTML='<b>'+DAYS[i]+'</b><small>'+(ok?'✓':L.n+'×'+L.n)+'</small>';
+    b.onclick=()=>{viewWd=i;mode=i===WD?'daily':'preview';load()}; w.appendChild(b)});
+}
+function render(){
+  sizeCell(); const n=P.n, board=$('board'); board.style.setProperty('--n1',n+1); board.innerHTML=''; board.classList.remove('won');
+  const s=sums();
+  const clue=(v,cur,lab)=>{const d=document.createElement('div');d.className='clue'+(cur===v?' done':cur>v?' over':'');d.setAttribute('aria-label',lab+': '+cur+' van '+v);d.innerHTML='<span>'+v+'</span>';return d};
+  board.appendChild(document.createElement('div'));
+  for(let c=0;c<n;c++)board.appendChild(clue(P.cols[c],s.C[c],'Kolom '+(c+1)));
+  for(let r=0;r<n;r++){board.appendChild(clue(P.rows[r],s.R[r],'Rij '+(r+1)));for(let c=0;c<n;c++){const d=document.createElement('div');d.className='cell';d.innerHTML='<i></i>';board.appendChild(d)}}
+  const layer=document.createElement('div');layer.className='layer';layer.id='layer';board.appendChild(layer);
+  placed.forEach((p,i)=>{if(p<0||(drag&&drag.i===i))return;const el=pieceEl(i,cell);el.style.left=(p%n)*cell+'px';el.style.top=Math.floor(p/n)*cell+'px';layer.appendChild(el)});
+  const tray=$('tray');tray.innerHTML='';
+  const done=solved(), allIn=placed.every(p=>p>=0);
+  if(done){
+    if(!endAt){endAt=Date.now();clearInterval(tick);if(!startAt)startAt=endAt;$('timer').textContent=fmt(endAt-startAt);board.classList.add('won');if(mode==='daily')recordSolve()}
+    const what=mode==='practice'?'oefenpuzzel':mode==='preview'?'voorproef '+DAYS[viewWd]:'nr. '+(TODAY-LAUNCH+1);
+    const txt='Pibbles · Randsom '+what+' · '+fmt(endAt-startAt)+' · '+hintTxt(hints)+(mode==='daily'?' · reeks '+S.streak:'');
+    tray.innerHTML='<div class="msg"><strong>Opgelost!</strong><p class="share" id="sharetxt"></p><button class="btn primary" id="copy">Kopieer resultaat</button><p id="savenote"></p></div>';
+    $('sharetxt').textContent=txt; $('savenote').textContent=mode==='daily'?saveNote:'';
+    $('copy').onclick=()=>{const b=$('copy');const ok=()=>b.textContent='Gekopieerd';const sel=()=>{const r=document.createRange();r.selectNodeContents($('sharetxt'));const x=getSelection();x.removeAllRanges();x.addRange(r);b.textContent='Geselecteerd, kopieer zelf'};
+      try{navigator.clipboard.writeText(txt).then(ok,sel)}catch(e){sel()}};
+  } else if(allIn && !drag){
+    tray.innerHTML='<div class="msg"><strong>Nog niet goed</strong><p>Alle blokken liggen, maar niet elk getal klopt. Pak een blok op en verschuif het.</p></div>';
+  } else {
+    P.pieces.forEach((k,i)=>{const slot=document.createElement('div');slot.className='slot'+((placed[i]>=0||(drag&&drag.i===i))?' empty':'');slot.appendChild(pieceEl(i,Math.round(cell*.56)));tray.appendChild(slot)});
+  }
+  $('hint').disabled=done; $('reset').disabled=done;
+}
+
+// ---- Streak, result and leaderboard ----
+function recordSolve(){
+  if(solvedToday())return;
+  const ms=endAt-startAt;
+  S=Object.assign({},S,streakAfterSolve(S,TODAY),{day:keyOf(now),ms,hints,score:ms+hints*HINT_PENALTY,solved:(S.solved||[]).filter(d=>d>TODAY-14).concat(TODAY)});
+  saveLocal(); renderChips(); renderWeek(); pushScore(); if(!db)renderBoardList([]);
+}
+let writing=null;
+function pushScore(){
+  if(!db||!uid)return;
+  writing=(writing||Promise.resolve()).then(()=>db.doc('scores/'+uid).set(JSON.parse(JSON.stringify(S))))
+    .then(()=>{saveNote=''},()=>{saveNote='Je score kon niet op de ranglijst worden gezet. Je reeks is op dit apparaat bewaard.'})
+    .then(()=>{const n=$('savenote');if(n&&mode==='daily')n.textContent=saveNote});
+}
+let lbRows=[], lbToken=0;
+async function renderBoardList(rows){
+  lbRows=rows; const my=++lbToken, list=rows.slice();
+  if(solvedToday() && !list.some(r=>r.id===uid)) list.push({id:uid||'local',score:S.score,ms:S.ms,hints:S.hints,streak:S.streak,local:true});
+  list.sort((a,b)=>a.score-b.score);
+  let ps={}; if(user){try{ps=await user.profiles(list.map(r=>r.id).filter(x=>x&&x!=='local'))}catch(e){}} if(my!==lbToken)return;
+  const ol=$('lb'); ol.innerHTML='';
+  list.forEach((r,i)=>{const me=r.local||r.id===uid, li=document.createElement('li'); if(me)li.className='me';
+    const rk=document.createElement('span');rk.className='rk';rk.textContent=i+1;
+    const nm=document.createElement('span');nm.className='nm';nm.textContent=(ps[r.id]&&ps[r.id].name)||(me?'Jij':'Speler');
+    const sm=document.createElement('small');sm.textContent=(me&&ps[r.id]&&ps[r.id].name?'jij · ':'')+hintTxt(r.hints||0)+' · reeks '+(r.streak||0);nm.appendChild(sm);
+    const tm=document.createElement('span');tm.className='tm';tm.textContent=fmt(r.score);
+    li.append(rk,nm,tm);ol.appendChild(li)});
+  if(!list.length && db)$('lbnote').textContent='Nog niemand heeft de puzzel van vandaag opgelost. Wees de eerste.';
+  else if(db)$('lbnote').textContent='';
+}
+async function connect(){
+  const use=window.claude&&window.claude.use?n=>window.claude.use(n):()=>Promise.resolve(null);
+  try{[db,user]=await Promise.all([use('db'),use('user')]); uid=user?await user.id():null}catch(e){db=null}
+  if(!db||!uid){db=null;$('lbnote').textContent='De gedeelde ranglijst is hier niet beschikbaar. Je reeks wordt op dit apparaat bewaard.';renderBoardList([]);return}
+  try{const snap=await db.doc('scores/'+uid).get();
+    if(snap.exists){const r=snap.data(); if(S.lastDay==null||(r.lastDay||0)>=S.lastDay){const was=solvedToday();S=Object.assign({},S,r);saveLocal();renderChips();renderWeek();if(!was&&solvedToday()&&mode==='daily'&&!endAt)load()}else pushScore()}
+    else if(S.lastDay!=null)pushScore();
+  }catch(e){}
+  const slow=setTimeout(()=>{$('lbnote').textContent='De ranglijst is nog niet bereikbaar.'},10000);
+  db.collection('scores').where('day','==',keyOf(now)).limit(200).onSnapshot(
+    q=>{if(!q.metadata.fromCache)clearTimeout(slow);renderBoardList(q.docs.map(d=>Object.assign({id:d.id},d.data())))},
+    ()=>{clearTimeout(slow);$('lbnote').textContent='De ranglijst is nu niet bereikbaar.'});
+}
+
+function startTimer(){if(startAt)return;startAt=Date.now();tick=setInterval(()=>{$('timer').textContent=fmt(Date.now()-startAt)},500)}
+function beginDrag(i,ev,fx,fy){
+  startTimer(); const d=dims(P.pieces[i]); placed[i]=-1;
+  const el=pieceEl(i,cell); el.classList.add('drag'); document.body.appendChild(el);
+  drag={i,el,gx:fx*d.w*cell,gy:fy*d.h*cell,lift:ev.pointerType==='touch'?cell*1.3:0,shadow:null,target:null,g:occupancy(i)};
+  render(); moveDrag(ev);
+}
+function moveDrag(ev){
+  if(!drag)return; const x=ev.clientX-drag.gx, y=ev.clientY-drag.gy-drag.lift;
+  drag.el.style.left=x+'px'; drag.el.style.top=y+'px';
+  const layer=$('layer'), rc=layer.getBoundingClientRect(), n=P.n;
+  const c0=Math.round((x-rc.left)/cell), r0=Math.round((y-rc.top)/cell);
+  const ok=fits(drag.i,r0,c0,drag.g); const t=ok?r0*n+c0:null;
+  if(t!==drag.target){drag.target=t; if(drag.shadow){drag.shadow.remove();drag.shadow=null}
+    if(ok){const s=pieceEl(drag.i,cell);s.classList.add('shadow');s.style.left=c0*cell+'px';s.style.top=r0*cell+'px';layer.appendChild(s);drag.shadow=s}}
+}
+function endDrag(){ if(!drag)return; const d=drag; drag=null; d.el.remove(); if(d.target!==null)placed[d.i]=d.target; render() }
+document.addEventListener('pointerdown',ev=>{
+  if(drag||ev.button>0)return; const b=ev.target.closest('.piece b'); if(!b||solved())return;
+  const el=b.parentElement, i=+el.dataset.i, rc=el.getBoundingClientRect();
+  ev.preventDefault(); beginDrag(i,ev,(ev.clientX-rc.left)/rc.width,(ev.clientY-rc.top)/rc.height);
+});
+document.addEventListener('pointermove',ev=>{if(drag){ev.preventDefault();moveDrag(ev)}},{passive:false});
+document.addEventListener('pointerup',endDrag); document.addEventListener('pointercancel',endDrag);
+document.addEventListener('touchmove',ev=>{if(drag)ev.preventDefault()},{passive:false});
+
+function hint(){
+  if(solved())return; startTimer(); const n=P.n;
+  const j=P.pieces.findIndex((k,idx)=>!P.pieces.some((k2,i2)=>k2===k&&placed[i2]===P.solution[idx])); if(j<0)return;
+  const key=P.pieces[j], sol=new Set(P.pieces.map((k,idx)=>k+'@'+P.solution[idx]));
+  let i=P.pieces.findIndex((k,idx)=>k===key&&placed[idx]<0); if(i<0)i=P.pieces.findIndex((k,idx)=>k===key&&!sol.has(k+'@'+placed[idx]));
+  placed[i]=-1; const g=occupancy(-1), p=P.solution[j];
+  for(const[r,c]of SHAPES[key]){const o=g[p+r*n+c]; if(o>=0)placed[o]=-1}
+  placed[i]=p; hints++; render();
+}
+$('hint').onclick=hint;
+$('reset').onclick=()=>{if(solved())return;placed=placed.map(()=>-1);render()};
+$('practice').onclick=()=>{practiceNo++;mode='practice';load()};
+window.addEventListener('resize',()=>{if(P&&!drag)render()});
+load(); renderBoardList([]); connect();
+</script>

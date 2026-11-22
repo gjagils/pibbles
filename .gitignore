@@ -1,0 +1,14 @@
+.DS_Store
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+Packages/*/Skip/build
+Packages/*/.build/
+build/
+*.log
+*.xcresult
+node_modules/
+.wrangler/
+.dev.vars
