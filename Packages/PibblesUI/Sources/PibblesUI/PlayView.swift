@@ -88,6 +88,8 @@ struct PlayView: View {
         self.kind = kind
         self.day = day
         self._model = State(initialValue: PlayModel(kind: kind, day: day))
+        // A puzzle you never solved opens with its rules shown.
+        self._showRules = State(initialValue: GameStore.shared.book.stats(kind: kind).solved == 0)
     }
 
     var body: some View {
