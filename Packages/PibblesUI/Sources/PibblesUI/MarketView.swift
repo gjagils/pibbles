@@ -1,41 +1,6 @@
 import SwiftUI
 import PibblesCore
 
-/// The market, as on the style board: a card per stall with its icon tile.
-struct MarketView: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14.0) {
-                ZStack(alignment: .bottomLeading) {
-                    Landscape(name: "panorama-market", height: 130.0)
-                    HStack(spacing: 12.0) {
-                        PibblesLogo(size: 48.0)
-                        VStack(alignment: .leading, spacing: 0.0) {
-                            Text(T.s("Puzzle Market", "Puzzelmarkt"))
-                                .font(PibblesStyle.title(28.0))
-                                .foregroundStyle(PibblesStyle.ink)
-                            Text(T.s("Discover more puzzles", "Ontdek meer puzzels"))
-                                .font(PibblesStyle.text(14.0))
-                                .foregroundStyle(PibblesStyle.muted)
-                        }
-                    }
-                    .padding(.bottom, 6.0)
-                }
-                ForEach(KindInfo.stalls, id: \.self) { stall in
-                    NavigationLink(destination: StallView(stall: stall)) {
-                        StallCard(stall: stall)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 16.0)
-            .padding(.bottom, 16.0)
-        }
-        .pibblesScreen()
-        .hiddenNavigationBar()
-    }
-}
-
 /// One stall: coloured icon tile, name, tagline, its puzzles, a chevron, and a hill.
 struct StallCard: View {
     let stall: String

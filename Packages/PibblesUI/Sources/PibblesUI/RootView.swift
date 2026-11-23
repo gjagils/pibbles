@@ -1,7 +1,7 @@
 import SwiftUI
 import PibblesCore
 
-/// The app: four tabs as on the style board. Every screen comes from here; the iOS and
+/// The app: three tabs (Today, Ranking, Stats); the market lives on Today. Every screen comes from here; the iOS and
 /// Android hosts only show `RootView`.
 public struct RootView: View {
     @State var tab = 0
@@ -11,11 +11,8 @@ public struct RootView: View {
     public var body: some View {
         TabView(selection: $tab) {
             NavigationStack { HomeView() }
-                .tabItem { Label(title: { Text(T.s("Home", "Home")) }, icon: { tabIcon("tab-home") }) }
+                .tabItem { Label(title: { Text(T.s("Today", "Vandaag")) }, icon: { tabIcon("tab-home") }) }
                 .tag(0)
-            NavigationStack { MarketView() }
-                .tabItem { Label(title: { Text(T.s("Market", "Markt")) }, icon: { tabIcon("tab-markt") }) }
-                .tag(1)
             NavigationStack { RankingView() }
                 .tabItem { Label(title: { Text(T.s("Ranking", "Ranglijst")) }, icon: { tabIcon("tab-ranglijst") }) }
                 .tag(2)
@@ -63,11 +60,13 @@ struct StatTile: View {
 struct KindBadge: View {
     let kind: PuzzleKind
     var size: Double = 44.0
+    /// Another colour than the puzzle's own, such as its stall's.
+    var color: Color? = nil
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.28)
-                .fill(PibblesStyle.kindColor(kind))
+                .fill(color ?? PibblesStyle.kindColor(kind))
             KindIcon(kind: kind, size: size * 0.78)
         }
         .frame(width: size, height: size)

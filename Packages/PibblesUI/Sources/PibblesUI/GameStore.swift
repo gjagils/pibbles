@@ -9,6 +9,8 @@ public final class GameStore {
     public static let shared = GameStore()
 
     public var book: ProgressBook
+    /// Goes up whenever an unfinished game is saved or cleared, so Today can show "Continue".
+    public var savedGames = 0
     public var playerName: String {
         didSet { UserDefaults.standard.set(playerName, forKey: "playerName") }
     }

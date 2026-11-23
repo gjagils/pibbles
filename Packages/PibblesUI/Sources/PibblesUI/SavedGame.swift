@@ -34,10 +34,12 @@ struct SavedGame {
         for list in lists { lines.append(SavedGame.text(list)) }
         let text = "\(elapsedMilliseconds);\(hints);" + SavedGame.text(values) + ";" + lines.joined(separator: "|")
         UserDefaults.standard.set(text, forKey: SavedGame.key(kind: kind, day: day))
+        GameStore.shared.savedGames += 1
     }
 
     static func clear(kind: PuzzleKind, day: Int) {
         UserDefaults.standard.removeObject(forKey: key(kind: kind, day: day))
+        GameStore.shared.savedGames += 1
     }
 
     static func numbers(_ text: String) -> [Int] {

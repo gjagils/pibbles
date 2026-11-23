@@ -49,3 +49,9 @@ mag worden teruggedraaid; de reden staat erbij.
 18. **Een begonnen puzzel wordt bewaard** (bord, hints en tijd per soort en dag). Weggaan of
     de app op de achtergrond zetten pauzeert de klok; terugkomen gaat verder.
 19. **Stars: dubbeltik is een ster, enkel tikken of slepen zet een stip** (op verzoek).
+20. **Eén beginscherm Vandaag, geen tab Markt** (23 november, met de eigenaar). Het scherm houdt
+    het panorama en de kraamkaarten uit de markt; in elke kaart staan de puzzels van vandaag
+    met hun stand (Speel, Verder, tijd). De kaart "Puzzel van vandaag" is weg: de puzzel om
+    mee verder te gaan (begonnen, anders de eerste open) krijgt een rand en een gevulde knop.
+    "Week ›" opent de kraam met weekoverzicht en regels. Puzzeltegels krijgen hier de kleur
+    van hun kraam. Reeks en jokers blijven één geheel voor de hele app.
