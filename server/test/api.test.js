@@ -211,6 +211,25 @@ test("names are trimmed, cut to 20 characters and default to Player", async () =
   assert.equal((await score({ kind: "patterns", solution: day.patterns.solution, name: 42 })).body.name, "Player");
 });
 
+test("a new name replaces the name on this device's results for today and yesterday", async () => {
+  await score({ name: "Player" });
+  await score({ deviceId: "device-bbbb-0002", name: "Bob" });
+  const r = await call("POST", "/api/name", { body: { deviceId: "device-aaaa-0001", name: "  Nelleke  " } });
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.body, { name: "Nelleke", updated: 1 });
+  const board = await call("GET", "/api/scores/2026-11-23/blocks?deviceId=device-aaaa-0001");
+  assert.deepEqual(board.body.top.map((e) => e.name).sort(), ["Bob", "Nelleke"]);
+  assert.equal(board.body.me.name, "Nelleke");
+});
+
+test("name: bad device ids and wrong methods are refused", async () => {
+  assert.equal((await call("POST", "/api/name", { body: { deviceId: "x", name: "Ann" } })).status, 400);
+  assert.equal((await call("POST", "/api/name", { body: "[" })).status, 400);
+  assert.equal((await call("GET", "/api/name")).status, 405);
+  const none = await call("POST", "/api/name", { body: { deviceId: "device-cccc-0003", name: "" } });
+  assert.deepEqual(none.body, { name: "Player", updated: 0 });
+});
+
 test("ranking: lowest score first, ties by arrival, top 50 and your own rank", async () => {
   await upload();
   const results = [

@@ -35,3 +35,10 @@ export function isScoreDate(key, now) {
   const earliest = addDays(dateKey(now - 12 * HOUR), -1);
   return key >= earliest && key <= latestOpenDate(now);
 }
+
+/** Every date key that `isScoreDate` accepts at `now` (two or three days) */
+export function scoreDates(now) {
+  const keys = [];
+  for (let key = addDays(dateKey(now - 12 * HOUR), -1); key <= latestOpenDate(now); key = addDays(key, 1)) keys.push(key);
+  return keys;
+}

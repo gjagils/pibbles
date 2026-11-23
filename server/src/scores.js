@@ -1,7 +1,7 @@
 // Daily rankings per kind. Score = ms + 30000 per hint (Ranking.score), lowest
 // wins. Only a device's first result for a date and kind counts.
 import { KINDS, verifySolution } from "./verify.js";
-import { isScoreDate, parseDate } from "./dates.js";
+import { isScoreDate, parseDate, scoreDates } from "./dates.js";
 import { loadDay } from "./pack.js";
 
 export const HINT_PENALTY_MS = 30000;
@@ -71,6 +71,22 @@ async function result(env, row, accepted) {
       name: row.name, ms: row.ms, hints: row.hints, score: row.score, verified: row.verified === 1,
     },
   };
+}
+
+/**
+ * POST /api/name: a device's new display name, also on its results for the dates that
+ * still take scores (today and yesterday). Older days keep the name they had.
+ */
+export async function rename(env, body, now) {
+  if (body === null || typeof body !== "object") return bad("body must be an object");
+  const { deviceId } = body;
+  if (typeof deviceId !== "string" || !DEVICE_ID.test(deviceId)) return bad("deviceId must be 8-64 characters A-Z, a-z, 0-9 or -");
+  const name = cleanName(body.name);
+  const dates = scoreDates(now);
+  const updated = await env.DB.prepare(
+    `UPDATE scores SET name = ? WHERE device_id = ? AND date IN (${dates.map(() => "?").join(", ")})`
+  ).bind(name, deviceId, ...dates).run();
+  return { status: 200, body: { name, updated: updated.meta.changes } };
 }
 
 /** GET /api/scores/:date/:kind?deviceId=... */

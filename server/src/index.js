@@ -1,7 +1,7 @@
 // pibbles.app: the website (static assets, public/) and the API. wrangler.toml
 // sends only /api/* and /admin/* here; everything else is served as an asset.
 import { validateWeek, storeWeek, publicDay, loadWeek } from "./pack.js";
-import { submitScore, ranking } from "./scores.js";
+import { submitScore, ranking, rename } from "./scores.js";
 import { parseDate, isMonday } from "./dates.js";
 import { adminWeekPage, adminMessagePage } from "./admin-page.js";
 
@@ -97,6 +97,13 @@ export async function handle(request, env, now = Date.now()) {
     const body = await readJson(request, MAX_SCORE_BODY);
     if (body === null) return json({ error: "body must be JSON, at most 8 KB" }, 400);
     return answer(await submitScore(env, body, now));
+  }
+
+  if (path === "/api/name") {
+    if (method !== "POST") return json({ error: "use POST" }, 405, { allow: "POST" });
+    const body = await readJson(request, MAX_SCORE_BODY);
+    if (body === null) return json({ error: "body must be JSON, at most 8 KB" }, 400);
+    return answer(await rename(env, body, now));
   }
 
   if ((m = path.match(/^\/api\/scores\/([^/]+)\/([^/]+)$/))) {

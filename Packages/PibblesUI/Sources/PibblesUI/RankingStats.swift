@@ -52,8 +52,8 @@ enum ScoreUploader {
 
     /// True when the server answered (also when it refused the result): only a missing
     /// answer or a server error means "try again later".
-    static func send(_ body: String) async -> Bool {
-        guard let url = URL(string: base + "/scores") else { return true }
+    static func send(_ body: String, path: String = "/scores") async -> Bool {
+        guard let url = URL(string: base + path) else { return true }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -68,6 +68,14 @@ enum ScoreUploader {
         } catch {
             return false
         }
+    }
+
+    /// Puts a new name on this phone's results of today and yesterday (POST /api/name).
+    static func rename(_ name: String) async -> Bool {
+        let store = GameStore.shared
+        let shown = name.isEmpty ? T.s("Player", "Speler") : name
+        let body = "{\"deviceId\":\"\(store.deviceId)\",\"name\":\(quoted(shown))}"
+        return await send(body, path: "/name")
     }
 
     static func quoted(_ text: String) -> String {
@@ -104,6 +112,8 @@ struct RankingView: View {
     @State var mine: RankEntry? = nil
     @State var failed = false
     @State var nameDraft = ""
+    /// The name that was saved last, to show "Saved" until the field changes again.
+    @State var savedName: String? = nil
 
     var body: some View {
         ScrollView {
@@ -208,9 +218,23 @@ struct RankingView: View {
                 .background(PibblesStyle.background)
                 .clipShape(RoundedRectangle(cornerRadius: 10.0))
                 .onSubmit { saveName() }
-            Button(T.s("Save name", "Bewaar naam")) { saveName() }
-                .font(PibblesStyle.text(15.0, .semibold))
-                .foregroundStyle(PibblesStyle.purple)
+            HStack(spacing: 12.0) {
+                Button(action: { saveName() }) {
+                    Text(T.s("Save name", "Bewaar naam"))
+                        .font(PibblesStyle.text(15.0, .semibold))
+                        .foregroundStyle(Color.white)
+                        .padding(.horizontal, 16.0)
+                        .padding(.vertical, 9.0)
+                        .background(PibblesStyle.purple)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                if let savedName, savedName == nameDraft {
+                    Text("✓ " + T.s("Saved", "Bewaard"))
+                        .font(PibblesStyle.text(14.0, .semibold))
+                        .foregroundStyle(PibblesStyle.good)
+                }
+            }
         }
         .card(14.0)
     }
@@ -220,6 +244,15 @@ struct RankingView: View {
         if trimmed.count > 20 { trimmed = String(trimmed.prefix(20)) }
         store.playerName = trimmed
         nameDraft = trimmed
+        savedName = trimmed
+        #if os(iOS) && !SKIP
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        #endif
+        // Also on today's results that were sent already, then show the ranking again
+        Task {
+            _ = await ScoreUploader.rename(trimmed)
+            await refresh()
+        }
     }
 
     func refresh() async {
