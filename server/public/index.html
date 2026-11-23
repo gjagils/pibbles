@@ -9,7 +9,13 @@
 <meta name="theme-color" content="#1F1E2E" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="Pibbles · Daily Puzzles">
 <meta property="og:description" content="Seven calm little puzzles every day.">
+<meta property="og:image" content="https://pibbles.app/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -17,7 +23,7 @@
 <header class="top">
   <div class="wrap">
     <a class="brand" href="/" aria-label="Pibbles home">
-      <svg viewBox="0 0 120 120" aria-hidden="true"><use href="#mark"/></svg>Pibbles
+      <img src="/img/logo-512.png" alt="" width="34" height="34">Pibbles
     </a>
     <nav aria-label="Main">
       <a href="#puzzles" class="hide-sm">Puzzles</a>
@@ -40,28 +46,12 @@
         </div>
       </div>
 
-      <div class="scene" aria-hidden="true">
-        <span class="sun"></span>
-        <svg class="mountains" viewBox="0 0 440 200" preserveAspectRatio="none">
-          <path d="M0 200V128l64-46 52 34 74-74 70 60 44-30 66 48 70-36v116Z" fill="var(--soft)"/>
-          <path d="M0 200v-38l82-40 64 30 88-58 78 54 58-26 70 34v44Z" fill="var(--teal)" opacity=".55"/>
-        </svg>
-        <!-- The mark: four shapes joined by one free brush stroke (docs/stijl.md) -->
-        <svg class="mark" viewBox="0 0 120 120" role="img" aria-label="Pibbles logo">
-          <symbol id="mark" viewBox="0 0 120 120">
-            <rect width="120" height="120" rx="27" fill="#2D2A41"/>
-            <g fill="none" stroke="#F3EDE4" stroke-linecap="round">
-              <path d="M39.5 95.5A41 41 0 1 1 70.6 99.6" stroke-width="6.5"/>
-              <path d="M35.6 89.1A38 38 0 1 1 95.7 73" stroke-width="2" opacity=".5"/>
-              <path d="M87.6 92.9A43 43 0 0 1 71.1 101.5" stroke-width="2.5" opacity=".7"/>
-            </g>
-            <rect x="38" y="38" width="20" height="20" rx="6" fill="#8B7CB0"/>
-            <circle cx="72" cy="48" r="10" fill="#E29A57"/>
-            <path d="M48 62H58V72A10 10 0 0 1 48 82H38V72A10 10 0 0 1 48 62Z" fill="#6EA79A"/>
-            <path d="M62 82V72A10 10 0 0 1 82 72V82Z" fill="#8B7CB0"/>
-          </symbol>
-          <use href="#mark"/>
-        </svg>
+      <div class="scene">
+        <picture class="panorama" aria-hidden="true">
+          <source srcset="/img/panorama-dark.svg" media="(prefers-color-scheme: dark)">
+          <img src="/img/panorama-light.svg" alt="" width="1290" height="450">
+        </picture>
+        <img class="mark" src="/img/logo-512.png" alt="Pibbles logo" width="512" height="512">
       </div>
     </div>
     <div class="hero-floor waves" aria-hidden="true"></div>
@@ -76,99 +66,60 @@
 
       <ul class="kinds">
         <li class="kind">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <g font-family="ui-rounded, system-ui, sans-serif" font-size="11" font-weight="700" fill="var(--muted)" text-anchor="middle">
-              <text x="34" y="14">2</text><text x="56" y="14">3</text><text x="78" y="14">2</text><text x="100" y="14">1</text>
-              <text x="10" y="38">3</text><text x="10" y="60">1</text><text x="10" y="82">2</text><text x="10" y="104">2</text>
-            </g>
-            <g fill="var(--line)">
-              <rect x="24" y="24" width="20" height="20" rx="5"/><rect x="46" y="24" width="20" height="20" rx="5"/><rect x="68" y="24" width="20" height="20" rx="5"/><rect x="90" y="24" width="20" height="20" rx="5"/>
-              <rect x="24" y="46" width="20" height="20" rx="5"/><rect x="46" y="46" width="20" height="20" rx="5"/><rect x="68" y="46" width="20" height="20" rx="5"/><rect x="90" y="46" width="20" height="20" rx="5"/>
-              <rect x="24" y="68" width="20" height="20" rx="5"/><rect x="46" y="68" width="20" height="20" rx="5"/><rect x="68" y="68" width="20" height="20" rx="5"/><rect x="90" y="68" width="20" height="20" rx="5"/>
-              <rect x="24" y="90" width="20" height="20" rx="5"/><rect x="46" y="90" width="20" height="20" rx="5"/><rect x="68" y="90" width="20" height="20" rx="5"/><rect x="90" y="90" width="20" height="20" rx="5"/>
-            </g>
-            <g fill="var(--purple)"><rect x="24" y="24" width="20" height="20" rx="5"/><rect x="46" y="24" width="20" height="20" rx="5"/><rect x="68" y="24" width="20" height="20" rx="5"/></g>
-            <g fill="var(--orange)"><rect x="46" y="46" width="20" height="20" rx="5"/><rect x="24" y="68" width="20" height="20" rx="5"/><rect x="46" y="68" width="20" height="20" rx="5"/></g>
-            <g fill="var(--teal)"><rect x="68" y="90" width="20" height="20" rx="5"/><rect x="90" y="90" width="20" height="20" rx="5"/></g>
-          </svg>
+          <picture class="stall" aria-hidden="true">
+            <source srcset="/img/stall-blocks-dark.svg" media="(prefers-color-scheme: dark)">
+            <img src="/img/stall-blocks-light.svg" alt="" width="600" height="420">
+          </picture>
           <div>
             <span class="tag">Stall · 1 puzzle</span>
             <h3>Blocks</h3>
             <dl class="games">
-              <dt>Blocks</dt><dd>Fit every piece so each row and column holds as many filled squares as its number says.</dd>
+              <dt><img src="/img/puzzle-blocks.svg" alt="" width="40" height="40">Blocks</dt><dd>Fit every piece so each row and column holds as many filled squares as its number says.</dd>
             </dl>
           </div>
         </li>
 
         <li class="kind">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <g stroke-width="3">
-              <circle cx="21" cy="21" r="10" fill="var(--teal)"/><circle cx="47" cy="21" r="10" fill="var(--orange)"/><circle cx="73" cy="21" r="10" fill="none" stroke="var(--line)"/><circle cx="99" cy="21" r="10" fill="var(--orange)"/>
-              <circle cx="21" cy="47" r="10" fill="none" stroke="var(--line)"/><circle cx="47" cy="47" r="10" fill="var(--teal)"/><circle cx="73" cy="47" r="10" fill="var(--orange)"/><circle cx="99" cy="47" r="10" fill="none" stroke="var(--line)"/>
-              <circle cx="21" cy="73" r="10" fill="var(--orange)"/><circle cx="47" cy="73" r="10" fill="none" stroke="var(--line)"/><circle cx="73" cy="73" r="10" fill="var(--teal)"/><circle cx="99" cy="73" r="10" fill="var(--teal)"/>
-              <circle cx="21" cy="99" r="10" fill="var(--orange)"/><circle cx="47" cy="99" r="10" fill="var(--teal)"/><circle cx="73" cy="99" r="10" fill="none" stroke="var(--line)"/><circle cx="99" cy="99" r="10" fill="var(--orange)"/>
-            </g>
-          </svg>
+          <picture class="stall" aria-hidden="true">
+            <source srcset="/img/stall-logic-dark.svg" media="(prefers-color-scheme: dark)">
+            <img src="/img/stall-logic-light.svg" alt="" width="600" height="420">
+          </picture>
           <div>
             <span class="tag">Stall · 2 puzzles</span>
             <h3>Logic</h3>
             <dl class="games">
-              <dt>Duo</dt><dd>Two colours, half of each per line, never three alike in a row.</dd>
-              <dt>Stars</dt><dd>One star in every row, column and region, and no two stars touch.</dd>
+              <dt><img src="/img/puzzle-duo.svg" alt="" width="40" height="40">Duo</dt><dd>Two colours, half of each per line, never three alike in a row.</dd>
+              <dt><img src="/img/puzzle-stars.svg" alt="" width="40" height="40">Stars</dt><dd>One star in every row, column and region, and no two stars touch.</dd>
             </dl>
           </div>
         </li>
 
         <li class="kind">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <g font-family="ui-rounded, system-ui, sans-serif" font-size="10" font-weight="700" fill="var(--muted)" text-anchor="middle">
-              <text x="37" y="18">2</text><text x="55" y="18">4</text><text x="73" y="18">5</text><text x="91" y="18">4</text><text x="109" y="18">2</text>
-              <text x="13" y="40">3</text><text x="13" y="58">5</text><text x="13" y="76">5</text><text x="13" y="94">3</text><text x="13" y="112">1</text>
-            </g>
-            <g fill="var(--line)">
-              <rect x="28" y="28" width="16" height="16" rx="4"/><rect x="46" y="28" width="16" height="16" rx="4"/><rect x="64" y="28" width="16" height="16" rx="4"/><rect x="82" y="28" width="16" height="16" rx="4"/><rect x="100" y="28" width="16" height="16" rx="4"/>
-              <rect x="28" y="46" width="16" height="16" rx="4"/><rect x="100" y="46" width="16" height="16" rx="4"/>
-              <rect x="28" y="64" width="16" height="16" rx="4"/><rect x="100" y="64" width="16" height="16" rx="4"/>
-              <rect x="28" y="82" width="16" height="16" rx="4"/><rect x="46" y="82" width="16" height="16" rx="4"/><rect x="82" y="82" width="16" height="16" rx="4"/><rect x="100" y="82" width="16" height="16" rx="4"/>
-              <rect x="28" y="100" width="16" height="16" rx="4"/><rect x="46" y="100" width="16" height="16" rx="4"/><rect x="82" y="100" width="16" height="16" rx="4"/><rect x="100" y="100" width="16" height="16" rx="4"/>
-            </g>
-            <g fill="var(--orange)">
-              <rect x="46" y="28" width="16" height="16" rx="4"/><rect x="64" y="28" width="16" height="16" rx="4"/><rect x="82" y="28" width="16" height="16" rx="4"/>
-              <rect x="28" y="46" width="16" height="16" rx="4"/><rect x="46" y="46" width="16" height="16" rx="4"/><rect x="64" y="46" width="16" height="16" rx="4"/><rect x="82" y="46" width="16" height="16" rx="4"/><rect x="100" y="46" width="16" height="16" rx="4"/>
-              <rect x="28" y="64" width="16" height="16" rx="4"/><rect x="46" y="64" width="16" height="16" rx="4"/><rect x="64" y="64" width="16" height="16" rx="4"/><rect x="82" y="64" width="16" height="16" rx="4"/><rect x="100" y="64" width="16" height="16" rx="4"/>
-              <rect x="46" y="82" width="16" height="16" rx="4"/><rect x="64" y="82" width="16" height="16" rx="4"/><rect x="82" y="82" width="16" height="16" rx="4"/>
-              <rect x="64" y="100" width="16" height="16" rx="4"/>
-            </g>
-          </svg>
+          <picture class="stall" aria-hidden="true">
+            <source srcset="/img/stall-patterns-dark.svg" media="(prefers-color-scheme: dark)">
+            <img src="/img/stall-patterns-light.svg" alt="" width="600" height="420">
+          </picture>
           <div>
             <span class="tag">Stall · 2 puzzles</span>
             <h3>Patterns</h3>
             <dl class="games">
-              <dt>Pixels</dt><dd>The numbers give the runs of colour in each line. Fill them in and a little picture appears.</dd>
-              <dt>Links</dt><dd>Join each pair of dots with a path. Paths never cross and together fill the whole board.</dd>
+              <dt><img src="/img/puzzle-pixels.svg" alt="" width="40" height="40">Pixels</dt><dd>The numbers give the runs of colour in each line. Fill them in and a little picture appears.</dd>
+              <dt><img src="/img/puzzle-links.svg" alt="" width="40" height="40">Links</dt><dd>Join each pair of dots with a path. Paths never cross and together fill the whole board.</dd>
             </dl>
           </div>
         </li>
 
         <li class="kind">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <g fill="var(--line)">
-              <rect x="6" y="6" width="28" height="28" rx="8"/><rect x="46" y="6" width="28" height="28" rx="8"/><rect x="86" y="6" width="28" height="28" rx="8"/>
-              <rect x="6" y="46" width="28" height="28" rx="8"/><rect x="46" y="46" width="28" height="28" rx="8"/><rect x="86" y="46" width="28" height="28" rx="8"/>
-              <rect x="6" y="86" width="28" height="28" rx="8"/><rect x="46" y="86" width="28" height="28" rx="8"/><rect x="86" y="86" width="28" height="28" rx="8"/>
-            </g>
-            <g font-family="ui-rounded, system-ui, sans-serif" font-weight="800" text-anchor="middle">
-              <g font-size="16" fill="var(--ink)"><text x="20" y="26">1</text><text x="100" y="66">1</text><text x="60" y="106">1</text><text x="60" y="66">3</text></g>
-              <g font-size="16" fill="var(--purple)" opacity=".55"><text x="60" y="26">2</text><text x="100" y="26">3</text><text x="20" y="66">2</text><text x="20" y="106">3</text><text x="100" y="106">2</text></g>
-              <g font-size="14" fill="var(--orange)"><text x="40" y="25">&lt;</text><text x="80" y="65">&gt;</text><text x="20" y="45">∧</text><text x="100" y="85">∧</text></g>
-            </g>
-          </svg>
+          <picture class="stall" aria-hidden="true">
+            <source srcset="/img/stall-numbers-dark.svg" media="(prefers-color-scheme: dark)">
+            <img src="/img/stall-numbers-light.svg" alt="" width="600" height="420">
+          </picture>
           <div>
             <span class="tag">Stall · 2 puzzles</span>
             <h3>Numbers</h3>
             <dl class="games">
-              <dt>Signs</dt><dd>Every number once per row and column; the little arrows say which neighbour is bigger.</dd>
-              <dt>Sums</dt><dd>Every number once per row and column, and each outlined cage adds up to its total.</dd>
+              <dt><img src="/img/puzzle-signs.svg" alt="" width="40" height="40">Signs</dt><dd>Every number once per row and column; the little arrows say which neighbour is bigger.</dd>
+              <dt><img src="/img/puzzle-sums.svg" alt="" width="40" height="40">Sums</dt><dd>Every number once per row and column, and each outlined cage adds up to its total.</dd>
             </dl>
           </div>
         </li>
