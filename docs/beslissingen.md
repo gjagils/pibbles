@@ -22,10 +22,10 @@ mag worden teruggedraaid; de reden staat erbij.
    ranglijst: dezelfde datum geeft toch dezelfde puzzel. Het automatisch maken op zondag
    (een geplande taak op de Mac of in CI) is nog niet ingericht.
 6. **Reeks**: een dag telt als je minstens één puzzel van die dag oplost.
-7. **Bediening met tikken, niet slepen**: een blok kiezen en op het veld tikken. Slepen
-   met een vinger werkt via Skip op Android niet zeker en was in het prototype ongetest.
-8. **Systeemlettertype (afgerond) in plaats van Poppins en Inter**: geen bestanden van
-   buiten gedownload. Poppins en Inter kunnen later in de pakketbronnen.
+7. **Blocks: slepen, met tikken als reserve** (aangepast 23 november op verzoek). Eén
+   sleepgebaar over veld en bak, het blok zweeft boven de vinger; werkt op iOS en Android.
+8. **Poppins en Inter** (aangepast 23 november): de bestanden uit `docs/brand/` staan in
+   de pakketbronnen en op de website.
 9. **Eén Cloudflare Worker voor pibbles.app**: website, API (`/api/...`) en ranglijst
    in D1. Niet uitgerold: uitrollen naar het echte domein laat ik aan de eigenaar.
 10. **Geen advertenties en geen aankoop in deze ronde**; het onderzoek daarnaar staat in
@@ -42,5 +42,10 @@ mag worden teruggedraaid; de reden staat erbij.
     Links: een hele lijn; de rest: één vak). Elke hint kost 30 s in de ranglijst.
 15. **Kleuren in donkere modus** volgen het stijlbord (donkere kolom). Kraam Numbers en
     Signs zijn blauw, zoals de Numbers-tegel op het stijlbord.
-16. **Niet gepusht naar GitHub en niets uitgerold** naar Cloudflare of de winkels: dat zijn
-    stappen naar buiten die de eigenaar zelf zet.
+16. **Gepusht en de website uitgerold op verzoek van de eigenaar** (23 november); de
+    winkels blijven bij hem.
+17. **Regels alleen de eerste keer per puzzelsoort**; daarna via de knop Regels. De klok
+    loopt pas als de regels dicht zijn en staat stil zolang ze open zijn.
+18. **Een begonnen puzzel wordt bewaard** (bord, hints en tijd per soort en dag). Weggaan of
+    de app op de achtergrond zetten pauzeert de klok; terugkomen gaat verder.
+19. **Stars: dubbeltik is een ster, enkel tikken of slepen zet een stip** (op verzoek).

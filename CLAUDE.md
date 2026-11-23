@@ -48,8 +48,21 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 - **Niet elk SF Symbol heeft een Android-tegenhanger**: `star` wordt een waarschuwingsdriehoek,
   `star.fill` werkt. Zie de tabel in SkipUI `Image.swift`; liever eigen vormen (`Icons.swift`).
 - **`.contentShape` en `.monospacedDigit()` bestaan niet in SkipUI.**
+- **Argumentlabels worden in Kotlin parameternamen** en verbergen een property met dezelfde
+  naam (`restore(positions saved:)` → "'val' cannot be reassigned"). Schrijf `self.positions`.
+- **Een `NavigationLink`-bestemming wordt meteen gebouwd**, ook zonder tikken: een keuze in
+  `State(initialValue:)` (zoals "regels tonen?") valt dan te vroeg. Beslis in `onAppear`.
+- **Tab-iconen uit de catalogus**: op iOS bepaalt de schaal (3x) de maat; Android toont het
+  plaatje op pixelmaat en krijgt een vaste `frame` (`tabIcon` in `RootView.swift`).
+- **Een breed plaatje (panorama) duwt de pagina breder** met `.scaledToFill()`. Gebruik
+  `Color.clear.frame(height:)` met het plaatje als `overlay` en `.clipped()` (`Landscape`).
 - **`Long shl Long` bestaat niet in Kotlin**: schuif een `Int64` over een `Int` (`one << square`),
   en vergelijk een `Int64` met een getypte nul (`let empty: Int64 = 0`).
+
+## Website testen
+
+Headless Chrome legt een pagina op minstens 500 px breed uit; een schermafdruk op 390 px is
+daardoor afgesneden. Test smalle schermen op 500 px of in een echte browser.
 
 ## Emulator
 

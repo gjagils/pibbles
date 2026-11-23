@@ -32,12 +32,13 @@ public struct BlocksPlay: Hashable, Sendable {
             }
             index += 1
         }
-        positions = check.positions
-        hints = max(0, savedHints)
+        // `self.`: in Kotlin the argument labels become parameter names that hide these
+        self.positions = check.positions
+        self.hints = max(0, savedHints)
         selected = nil
         var next = 0
-        while next < positions.count {
-            if positions[next] == nil {
+        while next < self.positions.count {
+            if self.positions[next] == nil {
                 selected = next
                 break
             }

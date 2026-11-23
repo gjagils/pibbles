@@ -11,16 +11,16 @@ public struct RootView: View {
     public var body: some View {
         TabView(selection: $tab) {
             NavigationStack { HomeView() }
-                .tabItem { Label(title: { Text(T.s("Home", "Home")) }, icon: { Image("tab-home", bundle: .module).renderingMode(.template) }) }
+                .tabItem { Label(title: { Text(T.s("Home", "Home")) }, icon: { tabIcon("tab-home") }) }
                 .tag(0)
             NavigationStack { MarketView() }
-                .tabItem { Label(title: { Text(T.s("Market", "Markt")) }, icon: { Image("tab-markt", bundle: .module).renderingMode(.template) }) }
+                .tabItem { Label(title: { Text(T.s("Market", "Markt")) }, icon: { tabIcon("tab-markt") }) }
                 .tag(1)
             NavigationStack { RankingView() }
-                .tabItem { Label(title: { Text(T.s("Ranking", "Ranglijst")) }, icon: { Image("tab-ranglijst", bundle: .module).renderingMode(.template) }) }
+                .tabItem { Label(title: { Text(T.s("Ranking", "Ranglijst")) }, icon: { tabIcon("tab-ranglijst") }) }
                 .tag(2)
             NavigationStack { StatsView() }
-                .tabItem { Label(title: { Text(T.s("Stats", "Statistiek")) }, icon: { Image("tab-statistiek", bundle: .module).renderingMode(.template) }) }
+                .tabItem { Label(title: { Text(T.s("Stats", "Statistiek")) }, icon: { tabIcon("tab-statistiek") }) }
                 .tag(3)
         }
         .tint(PibblesStyle.purple)
@@ -116,4 +116,14 @@ struct PuzzleRow: View {
         .background(PibblesStyle.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16.0))
     }
+}
+
+/// A tab icon from the asset catalog. On iOS the catalog scale (3x) sizes it; Android
+/// shows the image at its pixel size, so it gets a fixed frame there.
+func tabIcon(_ name: String) -> some View {
+    #if SKIP
+    return Image(name, bundle: .module).resizable().renderingMode(.template).frame(width: 24.0, height: 24.0)
+    #else
+    return Image(name, bundle: .module).renderingMode(.template)
+    #endif
 }
