@@ -46,8 +46,9 @@ npx wrangler dev                             # http://localhost:8787
 
 ## Live zetten (eenmalig, door de eigenaar)
 
-Er is nog niets aangemaakt of uitgerold; `database_id` in `wrangler.toml` is een
-placeholder.
+Staat live sinds 23 november 2026: database `pibbles` (id in `wrangler.toml`), schema en
+`ADMIN_KEY` zijn gezet. Een nieuwe versie uitrollen: `npx wrangler deploy`. De stappen
+hieronder zijn alleen nodig voor een nieuw account.
 
 1. Inloggen: `cd server && npx wrangler login`
 2. Database maken: `npx wrangler d1 create pibbles`

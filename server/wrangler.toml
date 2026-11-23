@@ -15,9 +15,7 @@ run_worker_first = ["/api/*", "/admin/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "pibbles"
-# PLACEHOLDER: not created yet. Run `npx wrangler d1 create pibbles` and put the
-# database_id it prints here (README.md, "Live zetten").
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "1e729576-0565-46aa-8fdb-d680f473e53d"
 
 # Secret (wrangler secret put ADMIN_KEY): the key for PUT /api/admin/week and
 # the preview page /admin/week/<maandag>?key=...
