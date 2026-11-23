@@ -89,25 +89,29 @@ export async function rename(env, body, now) {
   return { status: 200, body: { name, updated: updated.meta.changes } };
 }
 
-/** GET /api/scores/:date/:kind?deviceId=... */
+/**
+ * GET /api/scores/:date/:kind?deviceId=...
+ * One batch (a single transaction), so the top, the total and this device's rank come
+ * from the same moment: a result that lands meanwhile is in all three or in none.
+ */
 export async function ranking(env, date, kind, deviceId) {
   if (parseDate(date) === null) return bad("date must be yyyy-MM-dd");
   if (!KINDS.includes(kind)) return bad("kind must be one of " + KINDS.join(", "));
-  const { results } = await env.DB.prepare(
-    "SELECT name, ms, hints, score, verified FROM scores WHERE date = ? AND kind = ? ORDER BY score, id LIMIT ?"
-  ).bind(date, kind, TOP).all();
-  const total = await env.DB.prepare("SELECT COUNT(*) AS n FROM scores WHERE date = ? AND kind = ?").bind(date, kind).first();
-  const body = {
-    date, kind, total: total.n,
-    top: results.map((r, i) => ({ rank: i + 1, name: r.name, ms: r.ms, hints: r.hints, score: r.score, verified: r.verified === 1 })),
-    me: null,
+  const device = typeof deviceId === "string" && DEVICE_ID.test(deviceId) ? deviceId : "";
+  const [top, total, mine] = await env.DB.batch([
+    env.DB.prepare("SELECT name, ms, hints, score, verified FROM scores WHERE date = ? AND kind = ? ORDER BY score, id LIMIT ?").bind(date, kind, TOP),
+    env.DB.prepare("SELECT COUNT(*) AS n FROM scores WHERE date = ? AND kind = ?").bind(date, kind),
+    env.DB.prepare(
+      "SELECT s.name, s.ms, s.hints, s.score, s.verified, 1 + (SELECT COUNT(*) FROM scores o WHERE o.date = s.date AND o.kind = s.kind AND (o.score < s.score OR (o.score = s.score AND o.id < s.id))) AS rank FROM scores s WHERE s.date = ? AND s.kind = ? AND s.device_id = ?"
+    ).bind(date, kind, device),
+  ]);
+  const me = mine.results[0];
+  return {
+    status: 200,
+    body: {
+      date, kind, total: total.results[0].n,
+      top: top.results.map((r, i) => ({ rank: i + 1, name: r.name, ms: r.ms, hints: r.hints, score: r.score, verified: r.verified === 1 })),
+      me: me ? { rank: me.rank, name: me.name, ms: me.ms, hints: me.hints, score: me.score, verified: me.verified === 1 } : null,
+    },
   };
-  if (typeof deviceId === "string" && DEVICE_ID.test(deviceId)) {
-    const mine = await env.DB.prepare("SELECT * FROM scores WHERE date = ? AND kind = ? AND device_id = ?").bind(date, kind, deviceId).first();
-    if (mine) body.me = {
-      rank: await rankOf(env, date, kind, mine.score, mine.id),
-      name: mine.name, ms: mine.ms, hints: mine.hints, score: mine.score, verified: mine.verified === 1,
-    };
-  }
-  return { status: 200, body };
 }

@@ -273,7 +273,8 @@ struct SolvedView: View {
                 ranking = answer
                 failed = false
                 withAnimation { rowsShown = true }
-                if answer.me != nil { return }
+                // Done once this phone's result is in and agrees with the count
+                if let me = answer.me, me.rank <= answer.total { return }
             } else {
                 failed = true
             }
