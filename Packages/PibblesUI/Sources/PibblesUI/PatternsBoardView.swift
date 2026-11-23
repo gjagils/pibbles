@@ -5,15 +5,18 @@ import PibblesCore
 struct PatternsBoardView: View {
     let puzzle: PatternsPuzzle
     let width: Double
+    /// Room for the whole board view (board, extras and buttons): it must fit the screen.
+    let height: Double
     let onSolved: (Int, String) -> Void
     @State var cells: [Int]
     @State var markMode = false
     @State var hints = 0
     @State var reported = false
 
-    init(puzzle: PatternsPuzzle, width: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: PatternsPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
+        self.height = height
         self.onSolved = onSolved
         var empty = [Int]()
         for _ in 0..<(puzzle.size * puzzle.size) { empty.append(0) }
@@ -30,7 +33,9 @@ struct PatternsBoardView: View {
 
     var cellSize: Double {
         let n = Double(puzzle.size)
-        return (width - clueWidth - (n - 1.0) * 3.0) / n
+        let fromWidth = (width - clueWidth - (n - 1.0) * 3.0) / n
+        let fromHeight = (height - clueHeight - 128.0 - (n - 1.0) * 3.0) / n
+        return max(14.0, min(fromWidth, fromHeight))
     }
 
     var body: some View {
@@ -68,7 +73,7 @@ struct PatternsBoardView: View {
             .frame(width: width)
             HStack(spacing: 10.0) {
                 modeButton(title: T.s("Fill", "Kleuren"), active: !markMode) { markMode = false }
-                modeButton(title: "× Empty", active: markMode) { markMode = true }
+                modeButton(title: T.s("× Empty", "× Leeg"), active: markMode) { markMode = true }
             }
             BoardControls(hints: hints, onHint: { hint() }, onClear: {
                 var empty = [Int]()

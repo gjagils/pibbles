@@ -5,21 +5,26 @@ import PibblesCore
 struct LogicBoardView: View {
     let puzzle: LogicPuzzle
     let width: Double
+    /// Room for the whole board view (board, extras and buttons): it must fit the screen.
+    let height: Double
     let onSolved: (Int, String) -> Void
     @State var values: [Int]
     @State var hints = 0
     @State var reported = false
 
-    init(puzzle: LogicPuzzle, width: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: LogicPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
+        self.height = height
         self.onSolved = onSolved
         self._values = State(initialValue: puzzle.givens)
     }
 
     var cellSize: Double {
         let n = Double(puzzle.size)
-        return (width - (n - 1.0) * 4.0) / n
+        let fromWidth = (width - (n - 1.0) * 4.0) / n
+        let fromHeight = (height - 70.0 - (n - 1.0) * 4.0) / n
+        return max(16.0, min(fromWidth, fromHeight))
     }
 
     var body: some View {

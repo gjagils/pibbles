@@ -1,30 +1,103 @@
 import SwiftUI
 import PibblesCore
 
-/// Blocks: the board with the counts, and the tray. Tap a block, then a square.
+/// Blocks: the board with the counts, and the tray. Drag a block onto the board (or off
+/// it, back to the tray); tapping a block and then a square works too. One drag gesture
+/// covers board and tray, so both platforms handle it the same way (Skip has no
+/// drag-and-drop between views).
 struct BlocksBoardView: View {
     let puzzle: Puzzle
     let width: Double
+    /// Room for the whole view (board, tray, buttons): it must fit the screen.
+    let height: Double
     let onSolved: (Int, String) -> Void
     @State var play: BlocksPlay
     @State var reported = false
+    // The drag in progress, in the coordinates of the board-and-tray area.
+    @State var touchPiece = -1
+    @State var touchFromBoard = false
+    @State var startX = -1.0
+    @State var startY = -1.0
+    @State var dragX = 0.0
+    @State var dragY = 0.0
+    @State var dragging = false
 
-    init(puzzle: Puzzle, width: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: Puzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
+        self.height = height
         self.onSolved = onSolved
         self._play = State(initialValue: BlocksPlay(puzzle: puzzle))
     }
 
+    // MARK: Geometry
+
+    let gap = 4.0
+    let countsHeight = 28.0
+    let countsWidth = 32.0
+    let hintHeight = 18.0
+    let slotHeight = 72.0
+
+    var n: Int { return puzzle.size }
+    var trayRows: Int { return (puzzle.pieces.count + 3) / 4 }
+    var trayHeight: Double { return Double(trayRows) * slotHeight }
+
     var cellSize: Double {
-        let n = Double(puzzle.size)
-        return (width - 36.0 - (n - 1.0) * 4.0) / n
+        let count = Double(n)
+        let fromWidth = (width - countsWidth - gap - (count - 1.0) * gap) / count
+        // counts row + gap, board, 12, hint, 12, tray, 12, buttons 54
+        let fixed = countsHeight + gap + 12.0 + hintHeight + 12.0 + trayHeight + 12.0 + 54.0
+        let fromHeight = (height - fixed - (count - 1.0) * gap) / count
+        return max(18.0, min(fromWidth, fromHeight))
     }
 
+    var stride: Double { return cellSize + gap }
+    var boardWidth: Double { return Double(n) * stride - gap + gap + countsWidth }
+    var gridX: Double { return (width - boardWidth) / 2.0 }
+    var gridY: Double { return countsHeight + gap }
+    var boardHeight: Double { return gridY + Double(n) * stride - gap }
+    var trayY: Double { return boardHeight + 12.0 + hintHeight + 12.0 }
+    var slotWidth: Double { return width / 4.0 }
+    /// How far above the finger a dragged block floats, so the finger does not hide it.
+    var lift: Double { return cellSize * 1.2 }
+
+    /// The pieces still in the tray, in tray order.
+    var trayPieces: [Int] {
+        var result = [Int]()
+        var index = 0
+        while index < puzzle.pieces.count {
+            if play.positions[index] == nil { result.append(index) }
+            index += 1
+        }
+        return result
+    }
+
+    // MARK: Views
+
     var body: some View {
-        VStack(spacing: 16.0) {
-            board
-            tray
+        VStack(spacing: 12.0) {
+            ZStack(alignment: .topLeading) {
+                VStack(spacing: 12.0) {
+                    board
+                    Text(hintText)
+                        .font(PibblesStyle.text(13.0))
+                        .foregroundStyle(PibblesStyle.muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(height: hintHeight)
+                    tray
+                }
+                .frame(width: width)
+                if dragging && touchPiece >= 0 {
+                    floatingPiece(touchPiece)
+                }
+            }
+            .frame(width: width, height: trayY + trayHeight, alignment: .topLeading)
+            .gesture(
+                DragGesture(minimumDistance: 0.0)
+                    .onChanged { value in changed(x: value.location.x, y: value.location.y) }
+                    .onEnded { value in ended(x: value.location.x, y: value.location.y) }
+            )
             BoardControls(hints: play.hints, onHint: {
                 play.hint()
                 check()
@@ -34,32 +107,38 @@ struct BlocksBoardView: View {
         }
     }
 
+    var hintText: String {
+        if play.isSolved { return T.s("All blocks fit.", "Alle blokken passen.") }
+        return T.s("Drag a block onto the board, or tap a block and then a square.",
+                   "Sleep een blok naar het veld, of tik een blok en dan een vak.")
+    }
+
     var board: some View {
         let counts = play.counts
-        return VStack(spacing: 4.0) {
-            HStack(spacing: 4.0) {
-                ForEach(0..<puzzle.size, id: \.self) { col in
+        return VStack(spacing: gap) {
+            HStack(spacing: gap) {
+                ForEach(0..<n, id: \.self) { col in
                     countLabel(target: puzzle.cols[col], current: counts.cols[col])
-                        .frame(width: cellSize, height: 28.0)
+                        .frame(width: cellSize, height: countsHeight)
                 }
-                Spacer().frame(width: 32.0, height: 28.0)
+                Spacer().frame(width: countsWidth, height: countsHeight)
             }
-            ForEach(0..<puzzle.size, id: \.self) { row in
-                HStack(spacing: 4.0) {
-                    ForEach(0..<puzzle.size, id: \.self) { col in
-                        square(row * puzzle.size + col)
+            ForEach(0..<n, id: \.self) { row in
+                HStack(spacing: gap) {
+                    ForEach(0..<n, id: \.self) { col in
+                        square(row * n + col)
                     }
                     countLabel(target: puzzle.rows[row], current: counts.rows[row])
-                        .frame(width: 32.0, height: cellSize)
+                        .frame(width: countsWidth, height: cellSize)
                 }
             }
         }
-        .frame(width: width)
+        .frame(width: boardWidth, height: boardHeight)
     }
 
     func countLabel(target: Int, current: Int) -> some View {
         Text("\(target)")
-            .font(PibblesStyle.title(20.0))
+            .font(PibblesStyle.title(min(20.0, cellSize * 0.5)))
             .foregroundStyle(current == target ? PibblesStyle.good : (current > target ? PibblesStyle.bad : PibblesStyle.ink))
     }
 
@@ -73,57 +152,158 @@ struct BlocksBoardView: View {
                     .stroke(piece == nil ? PibblesStyle.line : Color.clear, lineWidth: 1.0)
             )
             .frame(width: cellSize, height: cellSize)
-            .onTapGesture {
-                play.tap(square: index)
-                check()
-            }
     }
 
     var tray: some View {
-        VStack(spacing: 8.0) {
-            Text(play.isSolved ? T.s("All blocks fit.", "Alle blokken passen.") : (play.selected == nil ? T.s("Tap a block on the board to pick it up.", "Tik op een blok op het veld om het op te pakken.") : T.s("Tap a square for the top left corner of the chosen block.", "Tik op het vak voor de linkerbovenhoek van het gekozen blok.")))
-                .font(PibblesStyle.text(13.0))
-                .foregroundStyle(PibblesStyle.muted)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12.0) {
-                    ForEach(0..<puzzle.pieces.count, id: \.self) { index in
-                        if play.positions[index] == nil {
-                            pieceView(index)
+        let pieces = trayPieces
+        return VStack(spacing: 0.0) {
+            ForEach(0..<trayRows, id: \.self) { row in
+                HStack(spacing: 0.0) {
+                    ForEach(0..<4, id: \.self) { col in
+                        let slot = row * 4 + col
+                        ZStack {
+                            if slot < pieces.count {
+                                trayPiece(pieces[slot])
+                            }
                         }
+                        .frame(width: slotWidth, height: slotHeight)
                     }
                 }
-                .padding(.horizontal, 4.0)
-                .padding(.vertical, 4.0)
             }
-            .frame(height: 96.0)
         }
+        .frame(width: width, height: trayHeight)
     }
 
-    func pieceView(_ index: Int) -> some View {
+    func shapeView(_ index: Int, unit: Double, spacing: Double, opacity: Double) -> some View {
         let shape = ShapeCatalog.shape(puzzle.pieces[index])
-        let height = shape?.height ?? 1
-        let widthCells = shape?.width ?? 1
+        let rows = shape?.height ?? 1
+        let cols = shape?.width ?? 1
         let cells = shape?.cells ?? [Cell]()
-        let unit = 16.0
-        let isSelected = play.selected == index
-        return VStack(spacing: 2.0) {
-            ForEach(0..<height, id: \.self) { row in
-                HStack(spacing: 2.0) {
-                    ForEach(0..<widthCells, id: \.self) { col in
-                        RoundedRectangle(cornerRadius: 3.0)
-                            .fill(cells.contains(Cell(row: row, col: col)) ? PibblesStyle.pieceColor(index) : Color.clear)
+        return VStack(spacing: spacing) {
+            ForEach(0..<rows, id: \.self) { row in
+                HStack(spacing: spacing) {
+                    ForEach(0..<cols, id: \.self) { col in
+                        RoundedRectangle(cornerRadius: unit * 0.2)
+                            .fill(cells.contains(Cell(row: row, col: col)) ? PibblesStyle.pieceColor(index).opacity(opacity) : Color.clear)
                             .frame(width: unit, height: unit)
                     }
                 }
             }
         }
-        .padding(10.0)
-        .background(isSelected ? PibblesStyle.sand : PibblesStyle.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 12.0))
-        .overlay(RoundedRectangle(cornerRadius: 12.0).stroke(isSelected ? PibblesStyle.purple : PibblesStyle.line, lineWidth: isSelected ? 2.5 : 1.0))
-        .onTapGesture {
-            play.select(index)
+    }
+
+    func trayPiece(_ index: Int) -> some View {
+        let isSelected = play.selected == index
+        let isLifted = dragging && touchPiece == index
+        return shapeView(index, unit: 13.0, spacing: 2.0, opacity: isLifted ? 0.25 : 1.0)
+            .padding(8.0)
+            .background(isSelected ? PibblesStyle.sand : PibblesStyle.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 12.0))
+            .overlay(RoundedRectangle(cornerRadius: 12.0).stroke(isSelected ? PibblesStyle.purple : PibblesStyle.line, lineWidth: isSelected ? 2.5 : 1.0))
+    }
+
+    /// The block under the finger, at board size, floating a little above it.
+    func floatingPiece(_ index: Int) -> some View {
+        let shape = ShapeCatalog.shape(puzzle.pieces[index])
+        let pieceWidth = Double(shape?.width ?? 1) * stride - gap
+        let pieceHeight = Double(shape?.height ?? 1) * stride - gap
+        return shapeView(index, unit: cellSize, spacing: gap, opacity: 0.85)
+            .offset(x: dragX - pieceWidth / 2.0, y: dragY - lift - pieceHeight / 2.0)
+    }
+
+    // MARK: Touch
+
+    /// The board square at a point, or -1.
+    func squareAt(x: Double, y: Double) -> Int {
+        let col = Int(floor((x - gridX) / stride))
+        let row = Int(floor((y - gridY) / stride))
+        if x < gridX || y < gridY || col >= n || row >= n { return -1 }
+        return row * n + col
+    }
+
+    /// The tray piece at a point, or -1.
+    func trayPieceAt(x: Double, y: Double) -> Int {
+        if y < trayY || y >= trayY + trayHeight || x < 0.0 || x >= width { return -1 }
+        let slot = Int(floor((y - trayY) / slotHeight)) * 4 + Int(floor(x / slotWidth))
+        let pieces = trayPieces
+        return slot < pieces.count ? pieces[slot] : -1
+    }
+
+    func changed(x: Double, y: Double) {
+        if reported { return }
+        if startX < 0.0 {
+            startX = x
+            startY = y
+            touchPiece = -1
+            touchFromBoard = false
+            let square = squareAt(x: x, y: y)
+            if square >= 0 {
+                if let piece = play.piece(at: square) {
+                    touchPiece = piece
+                    touchFromBoard = true
+                }
+            } else {
+                touchPiece = trayPieceAt(x: x, y: y)
+            }
         }
+        let moved = abs(x - startX) + abs(y - startY)
+        if !dragging && touchPiece >= 0 && moved > 8.0 {
+            dragging = true
+            if touchFromBoard {
+                play.remove(touchPiece)
+            }
+        }
+        if dragging {
+            dragX = x
+            dragY = y
+        }
+    }
+
+    func ended(x: Double, y: Double) {
+        if reported {
+            reset()
+            return
+        }
+        if dragging && touchPiece >= 0 {
+            drop(touchPiece, x: x, y: y)
+        } else {
+            // A tap: on a square places or picks up, on a tray block selects it.
+            let square = squareAt(x: x, y: y)
+            if square >= 0 {
+                play.tap(square: square)
+            } else {
+                let piece = trayPieceAt(x: x, y: y)
+                if piece >= 0 { play.select(piece) }
+            }
+        }
+        reset()
+        check()
+    }
+
+    /// Puts the dragged block where it floats: its top left square is the one nearest to
+    /// the block's top left corner. Dropped off the board, it goes back to the tray.
+    func drop(_ piece: Int, x: Double, y: Double) {
+        guard let shape = ShapeCatalog.shape(puzzle.pieces[piece]) else { return }
+        let pieceWidth = Double(shape.width) * stride - gap
+        let pieceHeight = Double(shape.height) * stride - gap
+        let left = x - pieceWidth / 2.0
+        let top = y - lift - pieceHeight / 2.0
+        let col = Int(floor((left - gridX) / stride + 0.5))
+        let row = Int(floor((top - gridY) / stride + 0.5))
+        // Mostly off the board: back to the tray.
+        if col < -1 || row < -1 || col > n - shape.width + 1 || row > n - shape.height + 1 { return }
+        let clampedRow = min(max(row, 0), n - shape.height)
+        let clampedCol = min(max(col, 0), n - shape.width)
+        play.select(piece)
+        play.tap(square: clampedRow * n + clampedCol)
+    }
+
+    func reset() {
+        startX = -1.0
+        startY = -1.0
+        touchPiece = -1
+        touchFromBoard = false
+        dragging = false
     }
 
     func check() {

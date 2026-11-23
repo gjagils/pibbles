@@ -107,7 +107,7 @@ public enum KindInfo {
         case PuzzleKind.blocks:
             return [T.s("Place every block on the board. Blocks cannot be turned.", "Leg alle blokken op het veld. Blokken draaien kan niet."),
                     T.s("The numbers say how many squares are filled in each row and column.", "De getallen zeggen hoeveel vakken per rij en kolom gevuld zijn."),
-                    T.s("Pick a block below, then tap where its top left corner goes.", "Kies hieronder een blok en tik waar de linkerbovenhoek moet komen.")]
+                    T.s("Drag a block onto the board, or tap a block and then the square for its top left corner.", "Sleep een blok naar het veld, of tik een blok en dan het vak voor de linkerbovenhoek.")]
         case PuzzleKind.logic:
             return [T.s("Fill every square with teal or purple.", "Vul elk vak met groen of paars."),
                     T.s("Each row and column has as many teal as purple.", "Elke rij en kolom heeft evenveel groen als paars."),

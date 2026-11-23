@@ -5,15 +5,18 @@ import PibblesCore
 struct SumsBoardView: View {
     let puzzle: SumsPuzzle
     let width: Double
+    /// Room for the whole board view (board, extras and buttons): it must fit the screen.
+    let height: Double
     let onSolved: (Int, String) -> Void
     @State var values: [Int]
     @State var selected = -1
     @State var hints = 0
     @State var reported = false
 
-    init(puzzle: SumsPuzzle, width: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: SumsPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
+        self.height = height
         self.onSolved = onSolved
         var empty = [Int]()
         for _ in 0..<(puzzle.size * puzzle.size) { empty.append(0) }
@@ -21,7 +24,8 @@ struct SumsBoardView: View {
     }
 
     var cellSize: Double {
-        return width / Double(puzzle.size)
+        let n = Double(puzzle.size)
+        return max(20.0, min(width / n, (height - 134.0) / n))
     }
 
     var body: some View {
@@ -38,7 +42,7 @@ struct SumsBoardView: View {
                     }
                 }
             }
-            .frame(width: width)
+            .frame(width: cellSize * Double(n))
             .background(PibblesStyle.cell)
             .overlay(Rectangle().stroke(PibblesStyle.ink, lineWidth: 2.5))
             NumberPad(size: n) { value in enter(value) }

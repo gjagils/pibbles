@@ -5,15 +5,18 @@ import PibblesCore
 struct LinksBoardView: View {
     let puzzle: LinksPuzzle
     let width: Double
+    /// Room for the whole board view (board, extras and buttons): it must fit the screen.
+    let height: Double
     let onSolved: (Int, String) -> Void
     @State var paths: [[Int]]
     @State var colour = -1
     @State var hints = 0
     @State var reported = false
 
-    init(puzzle: LinksPuzzle, width: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: LinksPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
+        self.height = height
         self.onSolved = onSolved
         var empty = [[Int]]()
         for _ in puzzle.solution { empty.append([Int]()) }
@@ -21,7 +24,8 @@ struct LinksBoardView: View {
     }
 
     var cellSize: Double {
-        return width / Double(puzzle.size)
+        let n = Double(puzzle.size)
+        return max(20.0, min(width / n, (height - 104.0) / n))
     }
 
     /// The colour whose line runs through a square, or -1.
@@ -46,7 +50,7 @@ struct LinksBoardView: View {
                     }
                 }
             }
-            .frame(width: width, height: width)
+            .frame(width: cellSize * Double(n), height: cellSize * Double(n))
             .background(PibblesStyle.cell)
             .clipShape(RoundedRectangle(cornerRadius: 12.0))
             .gesture(

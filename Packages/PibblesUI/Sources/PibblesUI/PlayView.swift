@@ -94,34 +94,38 @@ struct PlayView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 16.0) {
-                    header
-                    if showRules {
-                        rulesCard
-                    }
-                    if let result = finishedMilliseconds {
-                        resultCard(milliseconds: result)
-                    }
-                    if let loaded = model.loaded {
-                        board(loaded, width: min(geometry.size.width - 32.0, 460.0))
-                    } else {
-                        VStack(spacing: 12.0) {
-                            ProgressView()
-                            Text(T.s("Setting out today's puzzle…", "De puzzel wordt klaargezet…"))
-                                .font(PibblesStyle.text(14.0))
-                                .foregroundStyle(PibblesStyle.muted)
+            // No ScrollView: the whole puzzle fits one screen, and a scroll view would steal
+            // the drags of Blocks and Links. The board takes the room left under the header.
+            let width = min(geometry.size.width - 32.0, 460.0)
+            let boardHeight = geometry.size.height - 24.0 - 56.0 - 12.0
+            VStack(spacing: 12.0) {
+                header
+                if let loaded = model.loaded {
+                    ZStack(alignment: .bottom) {
+                        board(loaded, width: width, height: boardHeight)
+                        if let result = finishedMilliseconds {
+                            resultCard(milliseconds: result)
                         }
-                        .frame(height: 240.0)
                     }
+                } else {
+                    Spacer()
+                    ProgressView()
+                    Text(T.s("Setting out today's puzzle…", "De puzzel wordt klaargezet…"))
+                        .font(PibblesStyle.text(14.0))
+                        .foregroundStyle(PibblesStyle.muted)
                 }
-                .padding(.horizontal, 16.0)
-                .padding(.vertical, 12.0)
+                Spacer(minLength: 0.0)
             }
+            .padding(.horizontal, 16.0)
+            .padding(.vertical, 12.0)
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .pibblesScreen()
         .navigationTitle(KindInfo.name(model.kind))
         .onAppear { model.start() }
+        .sheet(isPresented: $showRules) {
+            rulesSheet
+        }
     }
 
     var header: some View {
@@ -137,22 +141,42 @@ struct PlayView: View {
             }
             Spacer()
             ClockLabel(model: model, finishedMilliseconds: finishedMilliseconds)
-            Button(showRules ? T.s("Hide rules", "Verberg regels") : T.s("Rules", "Regels")) { showRules = !showRules }
+            Button(T.s("Rules", "Regels")) { showRules = true }
                 .font(PibblesStyle.text(14.0, .semibold))
                 .foregroundStyle(PibblesStyle.purple)
         }
     }
 
-    var rulesCard: some View {
-        VStack(alignment: .leading, spacing: 6.0) {
+    /// The rules in a sheet, so they never push the board off the screen.
+    var rulesSheet: some View {
+        VStack(alignment: .leading, spacing: 16.0) {
+            HStack(spacing: 12.0) {
+                KindBadge(kind: model.kind, size: 44.0)
+                Text(KindInfo.name(model.kind))
+                    .font(PibblesStyle.title(24.0))
+                    .foregroundStyle(PibblesStyle.ink)
+                Spacer()
+            }
             ForEach(KindInfo.rules(model.kind), id: \.self) { rule in
                 Text("•  " + rule)
-                    .font(PibblesStyle.text(14.0))
+                    .font(PibblesStyle.text(16.0))
                     .foregroundStyle(PibblesStyle.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            Spacer()
+            Button(action: { showRules = false }) {
+                Text(T.s("Play", "Spelen"))
+                    .font(PibblesStyle.text(17.0, .semibold))
+                    .foregroundStyle(Color.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14.0)
+                    .background(PibblesStyle.purple)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
         }
-        .card(14.0)
+        .padding(24.0)
+        .background(PibblesStyle.background.ignoresSafeArea())
     }
 
     func resultCard(milliseconds: Int) -> some View {
@@ -175,25 +199,28 @@ struct PlayView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .card(14.0)
+        .padding(14.0)
+        .background(PibblesStyle.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 18.0))
+        .shadow(color: Color.black.opacity(0.15), radius: 8.0)
     }
 
     @ViewBuilder
-    func board(_ loaded: LoadedPuzzle, width: Double) -> some View {
+    func board(_ loaded: LoadedPuzzle, width: Double, height: Double) -> some View {
         if let puzzle = loaded.blocks {
-            BlocksBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            BlocksBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.logic {
-            LogicBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            LogicBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.patterns {
-            PatternsBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            PatternsBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.numbers {
-            NumbersBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            NumbersBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.links {
-            LinksBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            LinksBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.stars {
-            StarsBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            StarsBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.sums {
-            SumsBoardView(puzzle: puzzle, width: width, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            SumsBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else {
             Text(T.s("This puzzle is coming soon.", "Deze puzzel komt binnenkort."))
                 .font(PibblesStyle.text(15.0))

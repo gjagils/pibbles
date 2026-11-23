@@ -5,14 +5,17 @@ import PibblesCore
 struct StarsBoardView: View {
     let puzzle: StarsPuzzle
     let width: Double
+    /// Room for the whole board view (board, extras and buttons): it must fit the screen.
+    let height: Double
     let onSolved: (Int, String) -> Void
     @State var stars: [Int]
     @State var hints = 0
     @State var reported = false
 
-    init(puzzle: StarsPuzzle, width: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: StarsPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
+        self.height = height
         self.onSolved = onSolved
         var empty = [Int]()
         for _ in 0..<(puzzle.size * puzzle.size) { empty.append(0) }
@@ -20,7 +23,8 @@ struct StarsBoardView: View {
     }
 
     var cellSize: Double {
-        return width / Double(puzzle.size)
+        let n = Double(puzzle.size)
+        return max(20.0, min(width / n, (height - 70.0) / n))
     }
 
     func areaColor(_ region: Int) -> Color {
@@ -43,7 +47,7 @@ struct StarsBoardView: View {
                     }
                 }
             }
-            .frame(width: width)
+            .frame(width: cellSize * Double(n))
             .background(PibblesStyle.cell)
             .overlay(Rectangle().stroke(PibblesStyle.ink, lineWidth: 2.5))
             BoardControls(hints: hints, onHint: { hint() }, onClear: {
