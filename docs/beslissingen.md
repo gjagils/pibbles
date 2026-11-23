@@ -66,3 +66,9 @@ mag worden teruggedraaid; de reden staat erbij.
       geen update meer naar Google Play.
     - Persoonlijk Play-account: openbaar publiceren vraagt eerst een gesloten test van 14 dagen
       met minstens 12 testers.
+22. **Na het oplossen: uitslag met penseelcirkel en ranglijst** (23 november, met de eigenaar).
+    De penseelring uit het logo schildert zich (masker dat met de klok mee groeit vanaf
+    linksonder), met je plaats van vandaag erin; daaronder tijd, hints, reeks en de top 4
+    (of top 3 plus jouw rij). Offline staat je tijd in de ring. Knoppen: "Hele ranglijst"
+    (opent die puzzel op het tabblad Ranglijst) en "Volgende: …". "Bekijk bord" sluit de
+    uitslag; een balk opent hem weer. Archiefdagen hebben geen ranglijst.

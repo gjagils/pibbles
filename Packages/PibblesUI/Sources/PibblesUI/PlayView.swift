@@ -137,6 +137,8 @@ struct PlayView: View {
     @State var finishedHints = 0
     @State var firstSolve = false
     @State var showRules = false
+    /// The solved screen over the board; closed with "View board", reopened from the bar.
+    @State var showSolved = true
     @Environment(\.scenePhase) var scenePhase
 
     init(kind: PuzzleKind, day: Int) {
@@ -157,7 +159,11 @@ struct PlayView: View {
                     ZStack(alignment: .bottom) {
                         board(loaded, width: width, height: boardHeight)
                         if let result = finishedMilliseconds {
-                            resultCard(milliseconds: result)
+                            if showSolved {
+                                SolvedView(kind: model.kind, day: model.day, milliseconds: result, hints: finishedHints, firstSolve: firstSolve, onClose: { showSolved = false })
+                            } else {
+                                solvedBar(milliseconds: result)
+                            }
                         }
                     }
                 } else {
@@ -265,34 +271,24 @@ struct PlayView: View {
         .background(PibblesStyle.background.ignoresSafeArea())
     }
 
-    func resultCard(milliseconds: Int) -> some View {
-        let record = store.book.record(kind: model.kind, day: model.day)
-        return VStack(spacing: 6.0) {
-            Image("celebration", bundle: .module)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(height: 64.0)
-            Text(T.s("Solved!", "Opgelost!"))
-                .font(PibblesStyle.title(24.0))
-                .foregroundStyle(PibblesStyle.good)
-            Text(TimeText.clock(milliseconds: milliseconds) + " · " + T.hints(finishedHints))
-                .font(PibblesStyle.text(16.0, .semibold))
-                .foregroundStyle(PibblesStyle.ink)
-            if firstSolve {
-                Text(model.day == store.today ? T.s("Counted for today's ranking and your streak.", "Telt mee voor de ranglijst van vandaag en je reeks.") : T.s("Saved in your archive.", "Bewaard in je archief."))
-                    .font(PibblesStyle.text(13.0))
-                    .foregroundStyle(PibblesStyle.muted)
-            } else if let record {
-                Text(T.s("Your first result stays: ", "Je eerste uitslag blijft staan: ") + TimeText.clock(milliseconds: record.milliseconds) + ".")
-                    .font(PibblesStyle.text(13.0))
-                    .foregroundStyle(PibblesStyle.muted)
+    /// With the solved screen closed: a small bar to open it again.
+    func solvedBar(milliseconds: Int) -> some View {
+        Button(action: { showSolved = true }) {
+            HStack(spacing: 10.0) {
+                Text("✓ " + T.s("Solved", "Opgelost") + " · " + TimeText.clock(milliseconds: milliseconds))
+                    .font(PibblesStyle.text(15.0, .semibold))
+                    .foregroundStyle(PibblesStyle.good)
+                Spacer()
+                Text(T.s("Result", "Uitslag") + " ›")
+                    .font(PibblesStyle.text(14.0, .semibold))
+                    .foregroundStyle(PibblesStyle.purple)
             }
+            .padding(14.0)
+            .background(PibblesStyle.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 16.0))
+            .shadow(color: Color.black.opacity(0.12), radius: 6.0)
         }
-        .frame(maxWidth: .infinity)
-        .padding(14.0)
-        .background(PibblesStyle.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 18.0))
-        .shadow(color: Color.black.opacity(0.15), radius: 8.0)
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder

@@ -70,6 +70,21 @@ enum ScoreUploader {
         }
     }
 
+    /// Today's ranking for one puzzle with this phone's own place, or nil when the server
+    /// is not reachable.
+    static func ranking(kind: PuzzleKind, day: Int) async -> RankingResponse? {
+        let store = GameStore.shared
+        let path = base + "/scores/" + PuzzleCalendar.dateKey(day: day) + "/" + kind.rawValue + "?deviceId=" + store.deviceId
+        guard let url = URL(string: path) else { return nil }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 { return nil }
+            return try JSONDecoder().decode(RankingResponse.self, from: data)
+        } catch {
+            return nil
+        }
+    }
+
     /// Puts a new name on this phone's results of today and yesterday (POST /api/name).
     static func rename(_ name: String) async -> Bool {
         let store = GameStore.shared
@@ -100,6 +115,7 @@ struct RankEntry: Codable, Hashable, Identifiable {
 }
 
 struct RankingResponse: Codable {
+    let total: Int
     let top: [RankEntry]
     let me: RankEntry?
 }
@@ -190,7 +206,12 @@ struct RankingView: View {
         .hiddenNavigationBar()
         .task {
             nameDraft = store.playerName
+            takeRequestedKind()
             await refresh()
+        }
+        // Opened from a solved puzzle ("Full ranking"): show that puzzle
+        .onChange(of: store.rankingKind) {
+            if takeRequestedKind() { Task { await refresh() } }
         }
     }
 
@@ -239,6 +260,17 @@ struct RankingView: View {
         .card(14.0)
     }
 
+    /// Switches to the puzzle a solved screen asked for; true when there was one.
+    @discardableResult
+    func takeRequestedKind() -> Bool {
+        if let requested = store.rankingKind {
+            kind = requested
+            store.rankingKind = nil
+            return true
+        }
+        return false
+    }
+
     func saveName() {
         var trimmed = nameDraft.trimmingCharacters(in: .whitespaces)
         if trimmed.count > 20 { trimmed = String(trimmed.prefix(20)) }
@@ -260,18 +292,10 @@ struct RankingView: View {
         mine = nil
         failed = false
         await ScoreUploader.flush()
-        let path = ScoreUploader.base + "/scores/" + PuzzleCalendar.dateKey(day: store.today) + "/" + kind.rawValue + "?deviceId=" + store.deviceId
-        guard let url = URL(string: path) else { return }
-        do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
-                failed = true
-                return
-            }
-            let decoded = try JSONDecoder().decode(RankingResponse.self, from: data)
-            entries = decoded.top
-            mine = decoded.me
-        } catch {
+        if let answer = await ScoreUploader.ranking(kind: kind, day: store.today) {
+            entries = answer.top
+            mine = answer.me
+        } else {
             failed = true
         }
     }

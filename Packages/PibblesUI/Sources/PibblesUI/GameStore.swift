@@ -11,6 +11,10 @@ public final class GameStore {
     public var book: ProgressBook
     /// Goes up whenever an unfinished game is saved or cleared, so Today can show "Continue".
     public var savedGames = 0
+    /// The selected tab (0 Today, 2 Ranking, 3 Stats), so a screen can switch tabs.
+    public var tab = 0
+    /// A puzzle the Ranking tab should show when it opens next.
+    public var rankingKind: PuzzleKind? = nil
     public var playerName: String {
         didSet { UserDefaults.standard.set(playerName, forKey: "playerName") }
     }

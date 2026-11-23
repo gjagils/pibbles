@@ -5,6 +5,7 @@ import PibblesCore
 /// Android hosts only show `RootView`.
 public struct RootView: View {
     @State var tab = 0
+    @State var store = GameStore.shared
 
     public init() {}
 
@@ -21,6 +22,9 @@ public struct RootView: View {
                 .tag(3)
         }
         .tint(PibblesStyle.purple)
+        // Other screens switch tabs through the store (a solved puzzle opens the ranking)
+        .onChange(of: store.tab) { if tab != store.tab { tab = store.tab } }
+        .onChange(of: tab) { if store.tab != tab { store.tab = tab } }
         .task {
             // Results that could not be sent earlier (offline, server down)
             await ScoreUploader.flush()
