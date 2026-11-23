@@ -1,0 +1,22 @@
+{
+ "images": [
+  {
+   "filename": "hill-logic.png",
+   "idiom": "universal"
+  },
+  {
+   "appearances": [
+    {
+     "appearance": "luminosity",
+     "value": "dark"
+    }
+   ],
+   "filename": "hill-logic-dark.png",
+   "idiom": "universal"
+  }
+ ],
+ "info": {
+  "author": "xcode",
+  "version": 1
+ }
+}

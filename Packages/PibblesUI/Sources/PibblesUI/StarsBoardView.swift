@@ -7,6 +7,8 @@ struct StarsBoardView: View {
     let width: Double
     /// Room for the whole board view (board, extras and buttons): it must fit the screen.
     let height: Double
+    /// Keeps the board and the clock, so the puzzle can be continued later.
+    let model: PlayModel
     let onSolved: (Int, String) -> Void
     @State var stars: [Int]
     @State var hints = 0
@@ -21,14 +23,21 @@ struct StarsBoardView: View {
     @State var lastTapTime = 0.0
     @State var valueBeforeTap = 0
 
-    init(puzzle: StarsPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: StarsPuzzle, width: Double, height: Double, model: PlayModel, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
         self.height = height
+        self.model = model
         self.onSolved = onSolved
         var empty = [Int]()
         for _ in 0..<(puzzle.size * puzzle.size) { empty.append(0) }
-        self._stars = State(initialValue: empty)
+        let saved = model.saved
+        if saved.values.count == puzzle.size * puzzle.size {
+            self._stars = State(initialValue: saved.values)
+            self._hints = State(initialValue: saved.hints)
+        } else {
+            self._stars = State(initialValue: empty)
+        }
     }
 
     var cellSize: Double {
@@ -68,6 +77,7 @@ struct StarsBoardView: View {
                 var empty = [Int]()
                 for _ in 0..<(n * n) { empty.append(0) }
                 stars = empty
+                persist()
             })
         }
     }
@@ -166,6 +176,7 @@ struct StarsBoardView: View {
             startCell = -1
             dragged = false
         }
+        if dragged { persist() }
         if reported || dragged { return }
         let cell = cellAt(x: x, y: y)
         if cell < 0 || cell != startCell { return }
@@ -211,7 +222,12 @@ struct StarsBoardView: View {
         }
     }
 
+    func persist() {
+        model.save(hints: hints, values: stars, lists: [[Int]]())
+    }
+
     func check() {
+        persist()
         if !reported && StarsRules.isSolved(puzzle, stars: stars) {
             reported = true
             var answer = [Int]()

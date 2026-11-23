@@ -7,20 +7,29 @@ struct SumsBoardView: View {
     let width: Double
     /// Room for the whole board view (board, extras and buttons): it must fit the screen.
     let height: Double
+    /// Keeps the board and the clock, so the puzzle can be continued later.
+    let model: PlayModel
     let onSolved: (Int, String) -> Void
     @State var values: [Int]
     @State var selected = -1
     @State var hints = 0
     @State var reported = false
 
-    init(puzzle: SumsPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: SumsPuzzle, width: Double, height: Double, model: PlayModel, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
         self.height = height
+        self.model = model
         self.onSolved = onSolved
         var empty = [Int]()
         for _ in 0..<(puzzle.size * puzzle.size) { empty.append(0) }
-        self._values = State(initialValue: empty)
+        let saved = model.saved
+        if saved.values.count == puzzle.size * puzzle.size {
+            self._values = State(initialValue: saved.values)
+            self._hints = State(initialValue: saved.hints)
+        } else {
+            self._values = State(initialValue: empty)
+        }
     }
 
     var cellSize: Double {
@@ -50,6 +59,7 @@ struct SumsBoardView: View {
                 var empty = [Int]()
                 for _ in 0..<(n * n) { empty.append(0) }
                 values = empty
+                persist()
                 selected = -1
             })
         }
@@ -120,7 +130,12 @@ struct SumsBoardView: View {
         check()
     }
 
+    func persist() {
+        model.save(hints: hints, values: values, lists: [[Int]]())
+    }
+
     func check() {
+        persist()
         if !reported && SumsRules.isSolved(puzzle, values: values) {
             reported = true
             selected = -1

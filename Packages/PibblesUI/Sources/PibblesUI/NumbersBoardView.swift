@@ -34,18 +34,27 @@ struct NumbersBoardView: View {
     let width: Double
     /// Room for the whole board view (board, extras and buttons): it must fit the screen.
     let height: Double
+    /// Keeps the board and the clock, so the puzzle can be continued later.
+    let model: PlayModel
     let onSolved: (Int, String) -> Void
     @State var values: [Int]
     @State var selected = -1
     @State var hints = 0
     @State var reported = false
 
-    init(puzzle: NumbersPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: NumbersPuzzle, width: Double, height: Double, model: PlayModel, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
         self.height = height
+        self.model = model
         self.onSolved = onSolved
-        self._values = State(initialValue: puzzle.givens)
+        let saved = model.saved
+        if saved.values.count == puzzle.givens.count {
+            self._values = State(initialValue: saved.values)
+            self._hints = State(initialValue: saved.hints)
+        } else {
+            self._values = State(initialValue: puzzle.givens)
+        }
     }
 
     let gap = 22.0
@@ -104,6 +113,7 @@ struct NumbersBoardView: View {
             BoardControls(hints: hints, onHint: { hint() }, onClear: {
                 values = puzzle.givens
                 selected = -1
+                persist()
             })
         }
     }
@@ -147,7 +157,12 @@ struct NumbersBoardView: View {
         check()
     }
 
+    func persist() {
+        model.save(hints: hints, values: values, lists: [[Int]]())
+    }
+
     func check() {
+        persist()
         if !reported && NumbersRules.isSolved(puzzle, values: values) {
             reported = true
             selected = -1

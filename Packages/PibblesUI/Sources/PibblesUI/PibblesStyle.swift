@@ -1,5 +1,8 @@
 import SwiftUI
 import PibblesCore
+#if os(iOS) && !SKIP
+import CoreText
+#endif
 
 /// Colors from the Pibbles style board (docs/stijl.md), light and dark in the asset catalog.
 public enum PibblesStyle {
@@ -20,13 +23,34 @@ public enum PibblesStyle {
     /// An empty board square.
     public static let cell = Color("Cell", bundle: .module)
 
-    /// Rounded system type in place of Poppins/Inter (docs/beslissingen.md, point 8).
-    public static func title(_ size: Double) -> Font {
-        return Font.system(size: size, weight: .bold, design: .rounded)
+    /// iOS does not load the package fonts by itself: register them once at launch.
+    /// Android has them in res/font (poppins_semibold, poppins_bold, inter).
+    public static func registerFonts() {
+        #if os(iOS) && !SKIP
+        for name in ["Poppins-SemiBold", "Poppins-Bold", "Inter"] {
+            if let url = Bundle.module.url(forResource: name, withExtension: "ttf") {
+                CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+            }
+        }
+        #endif
     }
 
+    /// Titles: Poppins Bold (style board).
+    public static func title(_ size: Double) -> Font {
+        return Font.custom("Poppins Bold", size: size)
+    }
+
+    /// Text: Inter; semibold and bold use Poppins SemiBold, because Skip ignores the weight
+    /// of a custom font on Android (one font file per weight there).
     public static func text(_ size: Double, _ weight: Font.Weight = .regular) -> Font {
-        return Font.system(size: size, weight: weight, design: .rounded)
+        if weight == Font.Weight.semibold || weight == Font.Weight.bold {
+            return Font.custom("Poppins SemiBold", size: size)
+        }
+        #if SKIP
+        return Font.custom("Inter", size: size)
+        #else
+        return Font.custom("Inter", size: size).weight(weight)
+        #endif
     }
 
     public static let rose = Color("Rose", bundle: .module)

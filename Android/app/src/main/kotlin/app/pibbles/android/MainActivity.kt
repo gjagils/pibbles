@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.core.content.res.ResourcesCompat
 import pibbles.ui.RootView
 import skip.foundation.ProcessInfo
 import skip.ui.ColorScheme
@@ -21,6 +22,13 @@ class PibblesApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         ProcessInfo.launch(applicationContext)
+        // Load Poppins and Inter off the main thread (as Hoeveelishet does with Montserrat):
+        // SkipUI would otherwise load them on first use, on the main thread.
+        Thread {
+            for (font in listOf(R.font.poppins_semibold, R.font.poppins_bold, R.font.inter)) {
+                ResourcesCompat.getFont(applicationContext, font)
+            }
+        }.start()
     }
 }
 

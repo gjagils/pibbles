@@ -89,4 +89,21 @@ final class BlocksPlayTests: XCTestCase {
         XCTAssertEqual(play.positions, [nil, nil, nil, nil])
         XCTAssertEqual(play.selected, 0)
     }
+
+    func testRestoreASavedGame() {
+        var play = BlocksPlay(puzzle: puzzle)
+        play.restore(positions: [0, nil, 2, nil], hints: 2)
+        XCTAssertEqual(play.positions, [0, nil, 2, nil])
+        XCTAssertEqual(play.hints, 2)
+        XCTAssertEqual(play.selected, 1)
+    }
+
+    func testRestoreIgnoresAGameThatDoesNotFit() {
+        var play = BlocksPlay(puzzle: puzzle)
+        play.restore(positions: [0, nil, 0, nil], hints: 1) // two pieces on one spot
+        XCTAssertEqual(play.positions, [nil, nil, nil, nil])
+        play.restore(positions: [0, nil], hints: 1) // wrong length
+        XCTAssertEqual(play.positions, [nil, nil, nil, nil])
+        XCTAssertEqual(play.hints, 0)
+    }
 }

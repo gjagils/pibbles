@@ -7,20 +7,28 @@ struct LinksBoardView: View {
     let width: Double
     /// Room for the whole board view (board, extras and buttons): it must fit the screen.
     let height: Double
+    /// Keeps the board and the clock, so the puzzle can be continued later.
+    let model: PlayModel
     let onSolved: (Int, String) -> Void
     @State var paths: [[Int]]
     @State var colour = -1
     @State var hints = 0
     @State var reported = false
 
-    init(puzzle: LinksPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: LinksPuzzle, width: Double, height: Double, model: PlayModel, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
         self.height = height
+        self.model = model
         self.onSolved = onSolved
         var empty = [[Int]]()
         for _ in puzzle.solution { empty.append([Int]()) }
-        self._paths = State(initialValue: empty)
+        if model.saved.lists.count == puzzle.solution.count {
+            self._paths = State(initialValue: model.saved.lists)
+            self._hints = State(initialValue: model.saved.hints)
+        } else {
+            self._paths = State(initialValue: empty)
+        }
     }
 
     var cellSize: Double {
@@ -68,6 +76,7 @@ struct LinksBoardView: View {
                 var empty = [[Int]]()
                 for _ in puzzle.solution { empty.append([Int]()) }
                 paths = empty
+                persist()
             })
         }
     }
@@ -178,7 +187,12 @@ struct LinksBoardView: View {
         }
     }
 
+    func persist() {
+        model.save(hints: hints, values: [Int](), lists: paths)
+    }
+
     func check() {
+        persist()
         if !reported && LinksRules.isSolved(puzzle, paths: paths) {
             reported = true
             onSolved(hints, Answer.nested(paths))

@@ -24,6 +24,13 @@ final class PlayModel {
     var now = Date()
     var finished = false
     var started = false
+    /// The rules sheet is open: the clock waits.
+    var rulesOpen = false
+    /// The game as saved when the screen opened (board and time so far).
+    var saved = SavedGame()
+    /// Time played before the current stretch, and when the current stretch began.
+    var accumulatedMilliseconds = 0
+    var resumedAt: Date? = nil
 
     init(kind: PuzzleKind, day: Int) {
         self.kind = kind
@@ -56,15 +63,62 @@ final class PlayModel {
             return PlayView.make(kind: kindValue, day: dayValue)
         }.value
         #endif
+        saved = SavedGame.load(kind: kindValue, day: dayValue)
+        accumulatedMilliseconds = saved.elapsedMilliseconds
         loaded = result
-        startedAt = Date()
-        now = startedAt
+        now = Date()
+        if !rulesOpen { resume() }
+    }
+
+    /// Time played, including the stretch that is running now.
+    func elapsedMilliseconds(at moment: Date) -> Int {
+        var total = accumulatedMilliseconds
+        if let resumedAt {
+            total += max(0, Int(moment.timeIntervalSince(resumedAt) * 1000.0))
+        }
+        return total
+    }
+
+    /// Starts or continues the clock, once the puzzle is there and the rules are closed.
+    func resume() {
+        if resumedAt != nil || loaded == nil || finished || rulesOpen { return }
+        resumedAt = Date()
+        now = Date()
+    }
+
+    /// Stops the clock and keeps the time with the saved game.
+    func pause() {
+        if finished { return }
+        accumulatedMilliseconds = elapsedMilliseconds(at: Date())
+        resumedAt = nil
+        saved.elapsedMilliseconds = accumulatedMilliseconds
+        if loaded != nil { saved.save(kind: kind, day: day) }
+    }
+
+    /// The board changed: keep it, so the puzzle can be continued later.
+    func save(hints: Int, values: [Int], lists: [[Int]]) {
+        if finished { return }
+        saved.hints = hints
+        saved.values = values
+        saved.lists = lists
+        saved.elapsedMilliseconds = elapsedMilliseconds(at: Date())
+        saved.save(kind: kind, day: day)
+    }
+
+    /// Solved: the clock stops for good and the saved game goes.
+    func finish() -> Int {
+        let total = elapsedMilliseconds(at: Date())
+        accumulatedMilliseconds = total
+        resumedAt = nil
+        finished = true
+        SavedGame.clear(kind: kind, day: day)
+        return total
     }
 
     func tick() async {
         while !finished {
             try? await Task.sleep(nanoseconds: 500_000_000)
-            if !finished { now = Date() }
+            if !finished && resumedAt != nil { now = Date() }
         }
     }
 }
@@ -83,13 +137,12 @@ struct PlayView: View {
     @State var finishedHints = 0
     @State var firstSolve = false
     @State var showRules = false
+    @Environment(\.scenePhase) var scenePhase
 
     init(kind: PuzzleKind, day: Int) {
         self.kind = kind
         self.day = day
         self._model = State(initialValue: PlayModel(kind: kind, day: day))
-        // A puzzle you never solved opens with its rules shown.
-        self._showRules = State(initialValue: GameStore.shared.book.stats(kind: kind).solved == 0)
     }
 
     var body: some View {
@@ -122,7 +175,35 @@ struct PlayView: View {
         }
         .pibblesScreen()
         .navigationTitle(KindInfo.name(model.kind))
-        .onAppear { model.start() }
+        .onAppear {
+            // The rules show the very first time a kind of puzzle is opened, and the clock
+            // waits for them. Decided here, not in init: SwiftUI builds this view early (as
+            // the destination of a link), long before it opens.
+            let firstTime = !UserDefaults.standard.bool(forKey: "rulesSeen-" + model.kind.rawValue)
+            model.rulesOpen = firstTime
+            showRules = firstTime
+            model.start()
+            model.resume()
+        }
+        .onDisappear { model.pause() }
+        // The app goes to the background: the clock pauses, and continues on return.
+        .onChange(of: scenePhase) {
+            if scenePhase == ScenePhase.active {
+                model.resume()
+            } else {
+                model.pause()
+            }
+        }
+        .onChange(of: showRules) {
+            if showRules {
+                model.pause()
+                model.rulesOpen = true
+            } else {
+                UserDefaults.standard.set(true, forKey: "rulesSeen-" + model.kind.rawValue)
+                model.rulesOpen = false
+                model.resume()
+            }
+        }
         .sheet(isPresented: $showRules) {
             rulesSheet
         }
@@ -151,7 +232,12 @@ struct PlayView: View {
     var rulesSheet: some View {
         VStack(alignment: .leading, spacing: 16.0) {
             HStack(spacing: 12.0) {
-                KindBadge(kind: model.kind, size: 44.0)
+                ZStack {
+                    Image("brushring", bundle: .module)
+                        .resizable()
+                        .frame(width: 64.0, height: 64.0)
+                    KindBadge(kind: model.kind, size: 40.0)
+                }
                 Text(KindInfo.name(model.kind))
                     .font(PibblesStyle.title(24.0))
                     .foregroundStyle(PibblesStyle.ink)
@@ -182,6 +268,10 @@ struct PlayView: View {
     func resultCard(milliseconds: Int) -> some View {
         let record = store.book.record(kind: model.kind, day: model.day)
         return VStack(spacing: 6.0) {
+            Image("celebration", bundle: .module)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(height: 64.0)
             Text(T.s("Solved!", "Opgelost!"))
                 .font(PibblesStyle.title(24.0))
                 .foregroundStyle(PibblesStyle.good)
@@ -208,19 +298,19 @@ struct PlayView: View {
     @ViewBuilder
     func board(_ loaded: LoadedPuzzle, width: Double, height: Double) -> some View {
         if let puzzle = loaded.blocks {
-            BlocksBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            BlocksBoardView(puzzle: puzzle, width: width, height: height, model: model, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.logic {
-            LogicBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            LogicBoardView(puzzle: puzzle, width: width, height: height, model: model, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.patterns {
-            PatternsBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            PatternsBoardView(puzzle: puzzle, width: width, height: height, model: model, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.numbers {
-            NumbersBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            NumbersBoardView(puzzle: puzzle, width: width, height: height, model: model, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.links {
-            LinksBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            LinksBoardView(puzzle: puzzle, width: width, height: height, model: model, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.stars {
-            StarsBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            StarsBoardView(puzzle: puzzle, width: width, height: height, model: model, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else if let puzzle = loaded.sums {
-            SumsBoardView(puzzle: puzzle, width: width, height: height, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
+            SumsBoardView(puzzle: puzzle, width: width, height: height, model: model, onSolved: { hints, answer in solved(hints: hints, answer: answer) })
         } else {
             Text(T.s("This puzzle is coming soon.", "Deze puzzel komt binnenkort."))
                 .font(PibblesStyle.text(15.0))
@@ -232,8 +322,7 @@ struct PlayView: View {
 
     func solved(hints: Int, answer: String) {
         if finishedMilliseconds != nil { return }
-        let milliseconds = max(0, Int(Date().timeIntervalSince(model.startedAt) * 1000.0))
-        model.finished = true
+        let milliseconds = model.finish()
         finishedMilliseconds = milliseconds
         finishedHints = hints
         firstSolve = store.solved(kind: model.kind, day: model.day, milliseconds: milliseconds, hints: hints)
@@ -268,7 +357,7 @@ struct ClockLabel: View {
     let finishedMilliseconds: Int?
 
     var body: some View {
-        let running = Int(model.now.timeIntervalSince(model.startedAt) * 1000.0)
+        let running = model.elapsedMilliseconds(at: model.now)
         return Text(TimeText.clock(milliseconds: finishedMilliseconds ?? running))
             .font(PibblesStyle.text(18.0, .semibold))
             .foregroundStyle(PibblesStyle.ink)
@@ -284,9 +373,7 @@ struct BoardControls: View {
     var body: some View {
         HStack(spacing: 18.0) {
             Button(action: onClear) {
-                RestartIcon()
-                    .stroke(PibblesStyle.ink, style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
-                    .frame(width: 22.0, height: 22.0)
+                AssetIcon(name: "icon-restart", size: 26.0, color: PibblesStyle.ink)
                     .frame(width: 54.0, height: 54.0)
                     .background(PibblesStyle.surface)
                     .clipShape(Circle())
@@ -294,9 +381,7 @@ struct BoardControls: View {
             .buttonStyle(.plain)
             Button(action: onHint) {
                 HStack(spacing: 8.0) {
-                    BulbIcon()
-                        .stroke(PibblesStyle.mustard, style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
-                        .frame(width: 20.0, height: 22.0)
+                    AssetIcon(name: "icon-hint", size: 26.0, color: PibblesStyle.mustard)
                     Text(hints == 0 ? T.s("Hint", "Hint") : "\(hints)")
                         .font(PibblesStyle.text(16.0, .semibold))
                         .foregroundStyle(PibblesStyle.ink)

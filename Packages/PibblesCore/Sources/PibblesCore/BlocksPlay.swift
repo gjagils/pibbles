@@ -18,6 +18,33 @@ public struct BlocksPlay: Hashable, Sendable {
         self.selected = puzzle.pieces.isEmpty ? nil : 0
     }
 
+    /// Puts back a saved game: positions per piece (nil in the tray) and the hints used.
+    /// Ignored when it does not fit this puzzle (wrong length, a piece off the board or
+    /// on another piece).
+    public mutating func restore(positions saved: [Int?], hints savedHints: Int) {
+        if saved.count != puzzle.pieces.count { return }
+        var check = BlocksPlay(puzzle: puzzle)
+        var index = 0
+        while index < saved.count {
+            if let position = saved[index] {
+                if !PuzzleRules.canPlace(puzzle, piece: index, position: position, positions: check.positions) { return }
+                check.positions[index] = position
+            }
+            index += 1
+        }
+        positions = check.positions
+        hints = max(0, savedHints)
+        selected = nil
+        var next = 0
+        while next < positions.count {
+            if positions[next] == nil {
+                selected = next
+                break
+            }
+            next += 1
+        }
+    }
+
     public var isSolved: Bool {
         return PuzzleRules.isSolved(puzzle, positions: positions)
     }

@@ -7,20 +7,29 @@ struct PatternsBoardView: View {
     let width: Double
     /// Room for the whole board view (board, extras and buttons): it must fit the screen.
     let height: Double
+    /// Keeps the board and the clock, so the puzzle can be continued later.
+    let model: PlayModel
     let onSolved: (Int, String) -> Void
     @State var cells: [Int]
     @State var markMode = false
     @State var hints = 0
     @State var reported = false
 
-    init(puzzle: PatternsPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: PatternsPuzzle, width: Double, height: Double, model: PlayModel, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
         self.height = height
+        self.model = model
         self.onSolved = onSolved
         var empty = [Int]()
         for _ in 0..<(puzzle.size * puzzle.size) { empty.append(0) }
-        self._cells = State(initialValue: empty)
+        let saved = model.saved
+        if saved.values.count == puzzle.size * puzzle.size {
+            self._cells = State(initialValue: saved.values)
+            self._hints = State(initialValue: saved.hints)
+        } else {
+            self._cells = State(initialValue: empty)
+        }
     }
 
     var clueWidth: Double { return width * 0.24 }
@@ -79,6 +88,7 @@ struct PatternsBoardView: View {
                 var empty = [Int]()
                 for _ in 0..<(puzzle.size * puzzle.size) { empty.append(0) }
                 cells = empty
+                persist()
             })
         }
     }
@@ -136,7 +146,12 @@ struct PatternsBoardView: View {
         check()
     }
 
+    func persist() {
+        model.save(hints: hints, values: cells, lists: [[Int]]())
+    }
+
     func check() {
+        persist()
         if !reported && PatternsRules.isSolved(puzzle, cells: cells) {
             reported = true
             var answer = [Int]()

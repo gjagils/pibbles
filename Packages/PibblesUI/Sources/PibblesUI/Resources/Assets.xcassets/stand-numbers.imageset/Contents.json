@@ -1,0 +1,22 @@
+{
+ "images": [
+  {
+   "filename": "stand-numbers.png",
+   "idiom": "universal"
+  },
+  {
+   "appearances": [
+    {
+     "appearance": "luminosity",
+     "value": "dark"
+    }
+   ],
+   "filename": "stand-numbers-dark.png",
+   "idiom": "universal"
+  }
+ ],
+ "info": {
+  "author": "xcode",
+  "version": 1
+ }
+}

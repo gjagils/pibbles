@@ -7,7 +7,7 @@ struct MarketView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14.0) {
                 ZStack(alignment: .bottomLeading) {
-                    Landscape(height: 130.0)
+                    Landscape(name: "panorama-market", height: 130.0)
                     HStack(spacing: 12.0) {
                         PibblesLogo(size: 48.0)
                         VStack(alignment: .leading, spacing: 0.0) {
@@ -42,14 +42,15 @@ struct StallCard: View {
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            Hills(peaks: [0.6, 0.2, 0.5, 0.1], baseline: 0.95)
-                .fill(PibblesStyle.stallColor(stall).opacity(0.14))
+            Image("hill-" + stall.lowercased(), bundle: .module)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
                 .frame(width: 150.0, height: 60.0)
             HStack(spacing: 14.0) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 16.0)
                         .fill(PibblesStyle.stallColor(stall))
-                    StallIcon(stall: stall, size: 30.0)
+                    StallIcon(stall: stall, size: 40.0)
                 }
                 .frame(width: 58.0, height: 58.0)
                 VStack(alignment: .leading, spacing: 2.0) {
@@ -88,6 +89,11 @@ struct StallView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14.0) {
+                Image("stand-" + stall.lowercased(), bundle: .module)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 180.0)
                 StallCard(stall: stall)
                 ForEach(KindInfo.kinds(stall: stall), id: \.self) { kind in
                     NavigationLink(destination: KindWeekView(kind: kind)) {

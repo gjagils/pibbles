@@ -52,7 +52,11 @@ struct HomeView: View {
                     ForEach(KindInfo.stalls, id: \.self) { stall in
                         NavigationLink(destination: StallView(stall: stall)) {
                             VStack(spacing: 8.0) {
-                                StallIcon(stall: stall, size: 30.0, color: PibblesStyle.stallColor(stall))
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12.0).fill(PibblesStyle.stallColor(stall))
+                                    StallIcon(stall: stall, size: 34.0)
+                                }
+                                .frame(width: 46.0, height: 46.0)
                                 Text(stall)
                                     .font(PibblesStyle.text(13.0, .semibold))
                                     .foregroundStyle(PibblesStyle.ink)
@@ -101,9 +105,7 @@ struct HomeView: View {
     var todayCard: some View {
         NavigationLink(destination: PlayView(kind: cardKind, day: today)) {
             HStack(spacing: 14.0) {
-                CalendarIcon()
-                    .stroke(PibblesStyle.ink, style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
-                    .frame(width: 34.0, height: 34.0)
+                AssetIcon(name: "icon-calendar", size: 36.0, color: PibblesStyle.ink)
                 VStack(alignment: .leading, spacing: 2.0) {
                     Text(solvedToday == PuzzleCase.count ? T.s("All done today!", "Alles gedaan vandaag!") : T.s("Today's puzzle", "Puzzel van vandaag") + ": " + KindInfo.name(cardKind))
                         .font(PibblesStyle.text(18.0, .bold))

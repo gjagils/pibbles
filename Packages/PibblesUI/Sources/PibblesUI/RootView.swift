@@ -11,16 +11,16 @@ public struct RootView: View {
     public var body: some View {
         TabView(selection: $tab) {
             NavigationStack { HomeView() }
-                .tabItem { Label(T.s("Home", "Home"), systemImage: "house") }
+                .tabItem { Label(title: { Text(T.s("Home", "Home")) }, icon: { Image("tab-home", bundle: .module).renderingMode(.template) }) }
                 .tag(0)
             NavigationStack { MarketView() }
-                .tabItem { Label(T.s("Market", "Markt"), systemImage: "list.bullet") }
+                .tabItem { Label(title: { Text(T.s("Market", "Markt")) }, icon: { Image("tab-markt", bundle: .module).renderingMode(.template) }) }
                 .tag(1)
             NavigationStack { RankingView() }
-                .tabItem { Label(T.s("Ranking", "Ranglijst"), systemImage: "star.fill") }
+                .tabItem { Label(title: { Text(T.s("Ranking", "Ranglijst")) }, icon: { Image("tab-ranglijst", bundle: .module).renderingMode(.template) }) }
                 .tag(2)
             NavigationStack { StatsView() }
-                .tabItem { Label(T.s("Stats", "Statistiek"), systemImage: "chart.bar.xaxis") }
+                .tabItem { Label(title: { Text(T.s("Stats", "Statistiek")) }, icon: { Image("tab-statistiek", bundle: .module).renderingMode(.template) }) }
                 .tag(3)
         }
         .tint(PibblesStyle.purple)
@@ -41,15 +41,10 @@ struct StatTile: View {
     var body: some View {
         VStack(spacing: 4.0) {
             ZStack {
-                if icon == "flame" {
-                    FlameIcon().fill(color)
-                } else if icon == "cube" {
-                    CubeIcon().stroke(color, style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
-                } else {
-                    TrophyIcon().stroke(color, style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
-                }
+                Circle().fill(color)
+                AssetIcon(name: icon == "flame" ? "icon-streak" : (icon == "cube" ? "icon-joker" : "icon-trophy"), size: 22.0)
             }
-            .frame(width: 22.0, height: 22.0)
+            .frame(width: 34.0, height: 34.0)
             Text(value)
                 .font(PibblesStyle.title(22.0))
                 .foregroundStyle(PibblesStyle.ink)
@@ -73,7 +68,7 @@ struct KindBadge: View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.28)
                 .fill(PibblesStyle.kindColor(kind))
-            KindIcon(kind: kind, size: size * 0.52)
+            KindIcon(kind: kind, size: size * 0.78)
         }
         .frame(width: size, height: size)
     }

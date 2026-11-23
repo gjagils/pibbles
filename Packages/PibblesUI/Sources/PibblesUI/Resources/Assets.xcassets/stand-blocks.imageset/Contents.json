@@ -1,0 +1,22 @@
+{
+ "images": [
+  {
+   "filename": "stand-blocks.png",
+   "idiom": "universal"
+  },
+  {
+   "appearances": [
+    {
+     "appearance": "luminosity",
+     "value": "dark"
+    }
+   ],
+   "filename": "stand-blocks-dark.png",
+   "idiom": "universal"
+  }
+ ],
+ "info": {
+  "author": "xcode",
+  "version": 1
+ }
+}

@@ -1,0 +1,22 @@
+{
+ "images": [
+  {
+   "filename": "stand-patterns.png",
+   "idiom": "universal"
+  },
+  {
+   "appearances": [
+    {
+     "appearance": "luminosity",
+     "value": "dark"
+    }
+   ],
+   "filename": "stand-patterns-dark.png",
+   "idiom": "universal"
+  }
+ ],
+ "info": {
+  "author": "xcode",
+  "version": 1
+ }
+}

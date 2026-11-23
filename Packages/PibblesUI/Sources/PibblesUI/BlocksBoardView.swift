@@ -10,6 +10,8 @@ struct BlocksBoardView: View {
     let width: Double
     /// Room for the whole view (board, tray, buttons): it must fit the screen.
     let height: Double
+    /// Keeps the board and the clock, so the puzzle can be continued later.
+    let model: PlayModel
     let onSolved: (Int, String) -> Void
     @State var play: BlocksPlay
     @State var reported = false
@@ -22,12 +24,20 @@ struct BlocksBoardView: View {
     @State var dragY = 0.0
     @State var dragging = false
 
-    init(puzzle: Puzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
+    init(puzzle: Puzzle, width: Double, height: Double, model: PlayModel, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
         self.width = width
         self.height = height
+        self.model = model
         self.onSolved = onSolved
-        self._play = State(initialValue: BlocksPlay(puzzle: puzzle))
+        var play = BlocksPlay(puzzle: puzzle)
+        let saved = model.saved
+        if saved.values.count == puzzle.pieces.count {
+            var positions = [Int?]()
+            for value in saved.values { positions.append(value >= 0 ? value : nil) }
+            play.restore(positions: positions, hints: saved.hints)
+        }
+        self._play = State(initialValue: play)
     }
 
     // MARK: Geometry
@@ -103,6 +113,7 @@ struct BlocksBoardView: View {
                 check()
             }, onClear: {
                 play.clear()
+                persist()
             })
         }
     }
@@ -306,7 +317,14 @@ struct BlocksBoardView: View {
         dragging = false
     }
 
+    func persist() {
+        var values = [Int]()
+        for position in play.positions { values.append(position ?? -1) }
+        model.save(hints: play.hints, values: values, lists: [[Int]]())
+    }
+
     func check() {
+        persist()
         if play.isSolved && !reported {
             reported = true
             var answer = [Int]()

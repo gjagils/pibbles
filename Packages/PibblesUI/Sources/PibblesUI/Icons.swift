@@ -259,88 +259,74 @@ struct PlayIcon: Shape {
     }
 }
 
-/// The icon of a puzzle, in one colour.
+/// A one-colour icon from the asset catalog (docs/brand 2–4: white on transparent, kept as
+/// template images so they take any colour, on iOS and Android).
+struct AssetIcon: View {
+    let name: String
+    let size: Double
+    var color: Color = Color.white
+
+    var body: some View {
+        Image(name, bundle: .module)
+            .renderingMode(.template)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .foregroundStyle(color)
+            .frame(width: size, height: size)
+    }
+}
+
+/// The icon of a puzzle (docs/brand 2.1–2.7), in one colour.
 struct KindIcon: View {
     let kind: PuzzleKind
     let size: Double
     var color: Color = Color.white
 
     var body: some View {
-        let line = max(2.0, size * 0.11)
-        return ZStack {
-            switch kind {
-            case PuzzleKind.blocks:
-                GridIcon().fill(color)
-            case PuzzleKind.logic:
-                DuoIcon().fill(color)
-            case PuzzleKind.patterns:
-                PixelsIcon().fill(color)
-            case PuzzleKind.numbers:
-                SignsIcon().stroke(color, style: StrokeStyle(lineWidth: line, lineCap: .round, lineJoin: .round))
-            case PuzzleKind.stars:
-                StarIcon().fill(color)
-            case PuzzleKind.links:
-                LinksIcon().stroke(color, style: StrokeStyle(lineWidth: line, lineCap: .round, lineJoin: .round))
-                LinksDots().fill(color)
-            case PuzzleKind.sums:
-                SumsIcon().stroke(color, style: StrokeStyle(lineWidth: line, lineCap: .round, lineJoin: .round))
-            }
+        AssetIcon(name: KindIcon.assetName(kind), size: size, color: color)
+    }
+
+    static func assetName(_ kind: PuzzleKind) -> String {
+        switch kind {
+        case PuzzleKind.blocks: return "kind-blocks"
+        case PuzzleKind.logic: return "kind-duo"
+        case PuzzleKind.patterns: return "kind-pixels"
+        case PuzzleKind.numbers: return "kind-signs"
+        case PuzzleKind.stars: return "kind-stars"
+        case PuzzleKind.links: return "kind-links"
+        case PuzzleKind.sums: return "kind-sums"
         }
-        .frame(width: size, height: size)
     }
 }
 
-/// The icon of a stall, as on the style board's market.
+/// The icon of a stall (docs/brand 3.1–3.4), in one colour.
 struct StallIcon: View {
     let stall: String
     let size: Double
     var color: Color = Color.white
 
     var body: some View {
-        let line = max(2.0, size * 0.1)
-        return ZStack {
-            if stall == "Blocks" {
-                GridIcon().fill(color)
-            } else if stall == "Logic" {
-                CubeIcon().stroke(color, style: StrokeStyle(lineWidth: line, lineCap: .round, lineJoin: .round))
-            } else if stall == "Patterns" {
-                DiamondsIcon().fill(color)
-            } else {
-                Text("123")
-                    .font(PibblesStyle.title(size * 0.5))
-                    .foregroundStyle(color)
-                    .lineLimit(1)
-                    .fixedSize()
-            }
-        }
-        .frame(width: size, height: size)
+        AssetIcon(name: "stall-" + stall.lowercased(), size: size, color: color)
     }
 }
 
-/// The landscape of the style board: sun, layered hills and a blossom branch.
+/// A header illustration (docs/brand 5.1 and 5.2), light and dark.
 struct Landscape: View {
+    var name: String = "panorama-home"
     var height: Double = 120.0
 
     var body: some View {
-        GeometryReader { geometry in
-            let w = geometry.size.width
-            let h = geometry.size.height
-            ZStack(alignment: .topLeading) {
-                Circle()
-                    .fill(PibblesStyle.orange.opacity(0.35))
-                    .frame(width: h * 0.55, height: h * 0.55)
-                    .offset(x: w * 0.7, y: h * 0.12)
-                Hills(peaks: [0.0, 0.55, 0.2, 0.75, 0.35, 0.6, 0.15], baseline: 0.62)
-                    .fill(PibblesStyle.sage.opacity(0.55))
-                Hills(peaks: [0.4, 0.15, 0.55, 0.25, 0.65, 0.3, 0.5], baseline: 0.8)
-                    .fill(PibblesStyle.teal.opacity(0.28))
-                Blossom()
-                    .frame(width: h * 0.9, height: h * 0.7)
-            }
-            .frame(width: w, height: h)
-        }
-        .frame(height: height)
-        .clipped()
+        // The frame sets the size; the picture fills it. A filling image as the base view
+        // would make the whole page wider than the screen.
+        Color.clear
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .overlay(
+                Image(name, bundle: .module)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            )
+            .clipped()
     }
 }
 

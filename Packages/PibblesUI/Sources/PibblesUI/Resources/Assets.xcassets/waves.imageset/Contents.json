@@ -1,0 +1,22 @@
+{
+ "images": [
+  {
+   "filename": "waves.png",
+   "idiom": "universal"
+  },
+  {
+   "appearances": [
+    {
+     "appearance": "luminosity",
+     "value": "dark"
+    }
+   ],
+   "filename": "waves-dark.png",
+   "idiom": "universal"
+  }
+ ],
+ "info": {
+  "author": "xcode",
+  "version": 1
+ }
+}
