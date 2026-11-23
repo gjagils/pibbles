@@ -123,7 +123,7 @@ public enum KindInfo {
         case PuzzleKind.stars:
             return [T.s("Place one star in every row, every column and every coloured area.", "Zet één ster in elke rij, elke kolom en elk gekleurd gebied."),
                     T.s("Stars never touch, not even diagonally.", "Sterren raken elkaar nooit, ook niet schuin."),
-                    T.s("Tap once for a dot (no star), twice for a star.", "Tik één keer voor een stip (geen ster), twee keer voor een ster.")]
+                    T.s("Double-tap for a star. Tap or drag to mark squares without a star.", "Dubbeltik voor een ster. Tik of sleep om vakken zonder ster te markeren.")]
         case PuzzleKind.links:
             return [T.s("Draw a line between the two dots of each colour.", "Trek een lijn tussen de twee stippen van elke kleur."),
                     T.s("Lines never cross or share a square.", "Lijnen kruisen niet en delen geen vak."),

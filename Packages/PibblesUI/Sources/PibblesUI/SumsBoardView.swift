@@ -66,20 +66,20 @@ struct SumsBoardView: View {
         let left = col == 0 || puzzle.cages[index - 1] != cage
         let right = col == n - 1 || puzzle.cages[index + 1] != cage
         let thick = 2.5
-        let thin = 0.5
+        let thin = 1.2
         let value = values[index]
         return ZStack(alignment: .topLeading) {
             Rectangle()
                 .fill(selected == index ? PibblesStyle.sand : PibblesStyle.cell)
             VStack(spacing: 0.0) {
-                Rectangle().fill(top ? PibblesStyle.ink : PibblesStyle.line).frame(height: top ? thick : thin)
+                Rectangle().fill(top ? PibblesStyle.ink : PibblesStyle.muted.opacity(0.45)).frame(height: top ? thick : thin)
                 Spacer()
-                Rectangle().fill(bottom ? PibblesStyle.ink : PibblesStyle.line).frame(height: bottom ? thick : thin)
+                Rectangle().fill(bottom ? PibblesStyle.ink : PibblesStyle.muted.opacity(0.45)).frame(height: bottom ? thick : thin)
             }
             HStack(spacing: 0.0) {
-                Rectangle().fill(left ? PibblesStyle.ink : PibblesStyle.line).frame(width: left ? thick : thin)
+                Rectangle().fill(left ? PibblesStyle.ink : PibblesStyle.muted.opacity(0.45)).frame(width: left ? thick : thin)
                 Spacer()
-                Rectangle().fill(right ? PibblesStyle.ink : PibblesStyle.line).frame(width: right ? thick : thin)
+                Rectangle().fill(right ? PibblesStyle.ink : PibblesStyle.muted.opacity(0.45)).frame(width: right ? thick : thin)
             }
             if cage < labels.count && labels[cage] == index {
                 Text("\(puzzle.sums[cage])")

@@ -109,7 +109,7 @@ struct LinksBoardView: View {
         return ZStack {
             Rectangle()
                 .fill(mine >= 0 ? PibblesStyle.pieceColor(mine).opacity(0.18) : PibblesStyle.cell)
-            Rectangle().stroke(PibblesStyle.line, lineWidth: 0.5)
+            Rectangle().stroke(PibblesStyle.muted.opacity(0.45), lineWidth: 1.2)
             VStack(spacing: 0.0) {
                 Rectangle().fill(up ? lineColor : Color.clear).frame(width: thickness, height: cellSize / 2.0)
                 Rectangle().fill(down ? lineColor : Color.clear).frame(width: thickness, height: cellSize / 2.0)

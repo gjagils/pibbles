@@ -11,6 +11,15 @@ struct StarsBoardView: View {
     @State var stars: [Int]
     @State var hints = 0
     @State var reported = false
+    // Touch: one gesture for the board. A tap marks, a double tap places a star, a drag
+    // marks every square it passes (or clears marks when it starts on a mark).
+    @State var startCell = -1
+    @State var dragged = false
+    @State var eraseMarks = false
+    @State var lastDragCell = -1
+    @State var lastTapCell = -1
+    @State var lastTapTime = 0.0
+    @State var valueBeforeTap = 0
 
     init(puzzle: StarsPuzzle, width: Double, height: Double, onSolved: @escaping (Int, String) -> Void) {
         self.puzzle = puzzle
@@ -50,6 +59,11 @@ struct StarsBoardView: View {
             .frame(width: cellSize * Double(n))
             .background(PibblesStyle.cell)
             .overlay(Rectangle().stroke(PibblesStyle.ink, lineWidth: 2.5))
+            .gesture(
+                DragGesture(minimumDistance: 0.0)
+                    .onChanged { value in touchMoved(x: value.location.x, y: value.location.y) }
+                    .onEnded { value in touchEnded(x: value.location.x, y: value.location.y) }
+            )
             BoardControls(hints: hints, onHint: { hint() }, onClear: {
                 var empty = [Int]()
                 for _ in 0..<(n * n) { empty.append(0) }
@@ -68,20 +82,20 @@ struct StarsBoardView: View {
         let left = col == 0 || puzzle.regions[index - 1] != region
         let right = col == n - 1 || puzzle.regions[index + 1] != region
         let thick = 2.5
-        let thin = 0.5
+        let thin = 1.2
         let value = stars[index]
         return ZStack {
             Rectangle().fill(PibblesStyle.cell)
             Rectangle().fill(areaColor(region))
             VStack(spacing: 0.0) {
-                Rectangle().fill(top ? PibblesStyle.ink : PibblesStyle.line).frame(height: top ? thick : thin)
+                Rectangle().fill(top ? PibblesStyle.ink : PibblesStyle.muted.opacity(0.45)).frame(height: top ? thick : thin)
                 Spacer()
-                Rectangle().fill(bottom ? PibblesStyle.ink : PibblesStyle.line).frame(height: bottom ? thick : thin)
+                Rectangle().fill(bottom ? PibblesStyle.ink : PibblesStyle.muted.opacity(0.45)).frame(height: bottom ? thick : thin)
             }
             HStack(spacing: 0.0) {
-                Rectangle().fill(left ? PibblesStyle.ink : PibblesStyle.line).frame(width: left ? thick : thin)
+                Rectangle().fill(left ? PibblesStyle.ink : PibblesStyle.muted.opacity(0.45)).frame(width: left ? thick : thin)
                 Spacer()
-                Rectangle().fill(right ? PibblesStyle.ink : PibblesStyle.line).frame(width: right ? thick : thin)
+                Rectangle().fill(right ? PibblesStyle.ink : PibblesStyle.muted.opacity(0.45)).frame(width: right ? thick : thin)
             }
             if value == 2 {
                 Text("★")
@@ -94,13 +108,82 @@ struct StarsBoardView: View {
             }
         }
         .frame(width: cellSize, height: cellSize)
-        .onTapGesture {
-            if reported { return }
-            var copy = stars
-            copy[index] = (value + 1) % 3
-            stars = copy
-            check()
+    }
+
+    func cellAt(x: Double, y: Double) -> Int {
+        let n = puzzle.size
+        if x < 0.0 || y < 0.0 { return -1 }
+        let col = Int(floor(x / cellSize))
+        let row = Int(floor(y / cellSize))
+        if col >= n || row >= n { return -1 }
+        return row * n + col
+    }
+
+    func touchMoved(x: Double, y: Double) {
+        if reported { return }
+        let cell = cellAt(x: x, y: y)
+        if startCell < 0 {
+            startCell = cell
+            dragged = false
+            eraseMarks = cell >= 0 && stars[cell] == 1
+            return
         }
+        if cell < 0 || (cell == startCell && !dragged) { return }
+        if !dragged {
+            dragged = true
+            mark(startCell)
+            lastDragCell = startCell
+        }
+        // A fast finger can jump over squares: walk from the last square to this one.
+        let n = puzzle.size
+        var row = lastDragCell / n
+        var col = lastDragCell % n
+        let targetRow = cell / n
+        let targetCol = cell % n
+        while row != targetRow || col != targetCol {
+            if abs(targetCol - col) >= abs(targetRow - row) {
+                col += targetCol > col ? 1 : -1
+            } else {
+                row += targetRow > row ? 1 : -1
+            }
+            mark(row * n + col)
+        }
+        lastDragCell = cell
+    }
+
+    /// While dragging: empty squares get a mark, or marks are cleared in erase mode. Stars stay.
+    func mark(_ cell: Int) {
+        if cell < 0 || stars[cell] == 2 { return }
+        let wanted = eraseMarks ? 0 : 1
+        if stars[cell] == wanted { return }
+        var copy = stars
+        copy[cell] = wanted
+        stars = copy
+    }
+
+    func touchEnded(x: Double, y: Double) {
+        defer {
+            startCell = -1
+            dragged = false
+        }
+        if reported || dragged { return }
+        let cell = cellAt(x: x, y: y)
+        if cell < 0 || cell != startCell { return }
+        let now = Date().timeIntervalSince1970
+        var copy = stars
+        if cell == lastTapCell && now - lastTapTime < 0.35 {
+            // Double tap: a star, or away with the star it already was.
+            copy[cell] = valueBeforeTap == 2 ? 0 : 2
+            lastTapCell = -1
+        } else {
+            // Single tap: mark or unmark; a star goes away.
+            valueBeforeTap = copy[cell]
+            copy[cell] = copy[cell] == 0 ? 1 : 0
+            lastTapCell = cell
+            lastTapTime = now
+        }
+        stars = copy
+        check()
     }
 
     /// Places one star from the solution that is not on the board yet.
