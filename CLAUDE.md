@@ -23,6 +23,7 @@ swift test --package-path Packages/PibblesCore   # Core-tests: Swift en, via Ski
 (cd iOS && xcodegen)                             # Xcode-project genereren (iOS/project.yml)
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 (cd Android && ./gradlew assembleDebug)          # Android (draait eerst swift build van de UI)
+(cd Android && ./gradlew :app:bundleRelease)     # AAB voor Google Play (uploadsleutel in ~/.android-keys)
 (cd server && npm install && npm test)           # Worker-tests; npx wrangler dev voor lokaal
 (cd prototype && node t.js)                      # prototype: generator per weekdag meten
 ```
@@ -58,6 +59,12 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
   `Color.clear.frame(height:)` met het plaatje als `overlay` en `.clipped()` (`Landscape`).
 - **`Long shl Long` bestaat niet in Kotlin**: schuif een `Int64` over een `Int` (`one << square`),
   en vergelijk een `Int64` met een getypte nul (`let empty: Int64 = 0`).
+
+## Winkels
+
+Verhoog bij elke upload `versionCode` (`Android/app/build.gradle.kts`) en
+`CURRENT_PROJECT_VERSION` (`iOS/project.yml`). De AAB is ruim 20 MB (Skip zonder R8): de
+browser-tool uploadt tot 10 MB, dus de eigenaar kiest het bestand zelf in de Play Console.
 
 ## Website testen
 

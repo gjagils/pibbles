@@ -55,3 +55,14 @@ mag worden teruggedraaid; de reden staat erbij.
     mee verder te gaan (begonnen, anders de eerste open) krijgt een rand en een gevulde knop.
     "Week ›" opent de kraam met weekoverzicht en regels. Puzzeltegels krijgen hier de kleur
     van hun kraam. Reeks en jokers blijven één geheel voor de hele app.
+21. **Eerste testversies 0.1 (1)** (23 november, op verzoek van de eigenaar).
+    - App Store Connect: app "Pibbles", bundle-ID `app.pibbles`, SKU `pibbles`, hoofdtaal
+      Engels (VS); Nederlands komt als vertaling. Upload naar TestFlight via Xcode (Apple-account
+      in Xcode → Settings → Accounts).
+    - Google Play: app "Pibbles", pakket `app.pibbles`, Game, kosteloos (past bij het
+      verdienmodel: gratis met advertenties of aankoop), Engels (VS). Interne test met de
+      testerslijst "Pibbles". Uploadsleutel `~/.android-keys/pibbles-upload.jks`, wachtwoorden
+      in `~/.gradle/gradle.properties` (zoals Hoeveelishet). Bewaar die sleutel: zonder kan er
+      geen update meer naar Google Play.
+    - Persoonlijk Play-account: openbaar publiceren vraagt eerst een gesloten test van 14 dagen
+      met minstens 12 testers.
