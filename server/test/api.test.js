@@ -14,8 +14,9 @@ beforeEach(() => {
   env = { DB: testDb(), ADMIN_KEY: KEY };
 });
 
-async function call(method, path, { body, key, now = NOW } = {}) {
+async function call(method, path, { body, key, now = NOW, ip } = {}) {
   const headers = {};
+  if (ip) headers["cf-connecting-ip"] = ip;
   if (key) headers.authorization = `Bearer ${key}`;
   if (body !== undefined) headers["content-type"] = "application/json";
   const response = await handle(
@@ -29,9 +30,10 @@ async function call(method, path, { body, key, now = NOW } = {}) {
 
 const upload = (pack = week(), extra = {}) => call("PUT", "/api/admin/week", { body: pack, key: KEY, ...extra });
 
-const score = (fields = {}) => {
+const score = ({ now, ip, ...fields } = {}) => {
   const day = week().days[0];
   return call("POST", "/api/scores", {
+    now, ip,
     body: { date: "2026-11-23", kind: "blocks", deviceId: "device-aaaa-0001", name: "Ann", ms: 60000, hints: 0, solution: day.blocks.solution, ...fields },
   });
 };
@@ -280,4 +282,82 @@ test("the preview page needs the key and draws all 49 puzzles", async () => {
   assert.match(r.body, /Monday 23 November/);
   assert.match(r.body, /id="sol"/);
   assert.doesNotMatch(r.body, /<script/);
+});
+
+// ---- Security of the ranking ----
+
+test("a time faster than a person can make the moves is refused for a checked answer", async () => {
+  await upload();
+  const day = week().days[0];
+  const { minimumMs } = await import("../src/scores.js");
+  for (const kind of ["blocks", "logic", "patterns", "numbers", "stars", "links", "sums"]) {
+    const floor = minimumMs(kind, day[kind]);
+    assert.ok(floor >= 3000, kind);
+    const fast = await score({ kind, solution: day[kind].solution, ms: floor - 1, deviceId: "device-fast-0001" });
+    assert.equal(fast.status, floor > 3000 ? 422 : 400, kind);
+    // The refusal does not use up the try
+    assert.equal((await score({ kind, solution: day[kind].solution, ms: floor, deviceId: "device-fast-0001" })).status, 201, kind);
+  }
+});
+
+test("rude names become Player; ordinary names stay", async () => {
+  const { cleanName } = await import("../src/scores.js");
+  for (const rude of ["Kanker", "f u c k", "sh1t head", "Kut", "de nazi", "HOERTJE"]) assert.equal(cleanName(rude), "Player", rude);
+  for (const fine of ["Nelleke", "Gerd-Jan", "Lulu", "Kutlu", "Sexton", "Ann 2"]) assert.equal(cleanName(fine), fine, fine);
+  const r = await call("POST", "/api/name", { body: { deviceId: "device-aaaa-0001", name: "tyfus" } });
+  assert.equal(r.body.name, "Player");
+});
+
+test("more than 20 results or names a minute from one address get 429", async () => {
+  const IP = "203.0.113.9";
+  // Another address has its own count
+  assert.notEqual((await score({ ip: "198.51.100.1", deviceId: "device-other-0001" })).status, 429);
+  for (let i = 0; i < 19; i++) assert.notEqual((await score({ ip: IP, deviceId: `device-many-${String(i).padStart(4, "0")}` })).status, 429);
+  assert.notEqual((await call("POST", "/api/name", { ip: IP, body: { deviceId: "device-aaaa-0001", name: "Ann" } })).status, 429);
+  const r = await score({ ip: IP, deviceId: "device-bbbb-0002" });
+  assert.equal(r.status, 429);
+  assert.equal(r.headers.get("retry-after"), "60");
+  assert.equal((await call("POST", "/api/name", { ip: IP, body: { deviceId: "device-aaaa-0001", name: "Ann" } })).status, 429);
+  // Reading the ranking is not limited; the next minute counts afresh
+  assert.equal((await call("GET", "/api/scores/2026-11-23/blocks")).status, 200);
+  assert.notEqual((await score({ ip: IP, deviceId: "device-bbbb-0002", now: NOW + 60000 })).status, 429);
+  const left = await env.DB.prepare("SELECT COUNT(*) AS n FROM rate_limits").first();
+  assert.equal(left.n, 3);
+});
+
+async function adminForm(date, fields) {
+  const body = new URLSearchParams(fields);
+  const response = await handle(new Request(`${BASE}/admin/scores/${date}`, { method: "POST", body, headers: { "content-type": "application/x-www-form-urlencoded" } }), env, NOW);
+  return { status: response.status, location: response.headers.get("location"), body: await response.text() };
+}
+
+test("the owner sees a date's results and can hide a name or delete a result", async () => {
+  await upload();
+  await score({ name: "Ann" });
+  await score({ deviceId: "device-bbbb-0002", name: "Bobby", ms: 70000 });
+  assert.equal((await call("GET", "/admin/scores/2026-11-23")).status, 401);
+  assert.equal((await call("GET", `/admin/scores/2026-11-23?key=wrong-key-0123456789`)).status, 401);
+  const page = await call("GET", `/admin/scores/2026-11-23?key=${KEY}`);
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get("content-security-policy"), /form-action 'self'/);
+  assert.match(page.body, /Ann/);
+  assert.match(page.body, /Bobby/);
+
+  assert.equal((await adminForm("2026-11-23", { key: "wrong-key-0123456789", id: "2", action: "delete" })).status, 401);
+  const rows = await env.DB.prepare("SELECT id, name FROM scores ORDER BY id").all();
+  const bob = rows.results.find((r) => r.name === "Bobby").id, ann = rows.results.find((r) => r.name === "Ann").id;
+
+  const hidden = await adminForm("2026-11-23", { key: KEY, id: String(bob), action: "hide" });
+  assert.equal(hidden.status, 303);
+  assert.match(hidden.location, /done=hide$/);
+  const deleted = await adminForm("2026-11-23", { key: KEY, id: String(ann), action: "delete" });
+  assert.match(deleted.location, /done=delete$/);
+  assert.match((await adminForm("2026-11-23", { key: KEY, id: String(ann), action: "delete" })).location, /done=none$/);
+
+  const board = await call("GET", "/api/scores/2026-11-23/blocks");
+  assert.deepEqual(board.body.top.map((e) => e.name), ["Player"]);
+  // A deleted device may send again while the day takes scores
+  assert.equal((await score({ name: "Ann" })).status, 201);
+  // Other pages keep forms off
+  assert.match((await call("GET", "/admin/week/2026-11-23")).headers.get("content-security-policy"), /form-action 'none'/);
 });

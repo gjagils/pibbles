@@ -11,13 +11,42 @@ export const MAX_HINTS = 99;
 export const TOP = 50;
 const DEVICE_ID = /^[A-Za-z0-9-]{8,64}$/;
 
+/**
+ * The fastest believable time for a puzzle: the moves a person has to make, times a
+ * quick hand per move. Generous on purpose (a fast player is far slower), it only keeps
+ * out scripts that solve the board and send a few seconds.
+ */
+const MS_PER_MOVE = { blocks: 600, logic: 150, patterns: 100, numbers: 250, stars: 300, links: 50, sums: 250 };
+export function movesOf(kind, p) {
+  const n = p.size;
+  if (kind === "blocks") return p.pieces.length;
+  if (kind === "logic") return p.givens.filter((g) => g === -1).length;
+  if (kind === "patterns") return p.rowClues.flat().reduce((a, b) => a + b, 0);
+  if (kind === "numbers") return p.givens.filter((g) => g === 0).length;
+  if (kind === "stars") return n;
+  return n * n; // links: every cell is walked; sums: every cell is filled
+}
+export const minimumMs = (kind, p) => Math.max(MIN_MS, movesOf(kind, p) * MS_PER_MOVE[kind]);
+
+// Names that become "Player". Long words match anywhere (also spaced or with digits for
+// letters), short ones only as a whole word, so ordinary names stay.
+const BLOCKED_PARTS = ["kanker", "tering", "tyfus", "hoer", "neuk", "nigger", "nigga", "fuck", "shit", "cunt", "bitch", "whore", "hitler", "faggot", "flikker", "pedo"];
+const BLOCKED_WORDS = ["kut", "lul", "nazi", "slet", "sex", "porn", "kkk"];
+const LEET = { 0: "o", 1: "i", 3: "e", 4: "a", 5: "s", 7: "t", "@": "a", $: "s" };
+export function isBlockedName(name) {
+  const plain = name.toLowerCase().replace(/[013457@$]/g, (c) => LEET[c]).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const words = plain.split(/[^a-z]+/).filter(Boolean);
+  const joined = words.join("");
+  return BLOCKED_PARTS.some((part) => joined.includes(part)) || words.some((word) => BLOCKED_WORDS.includes(word));
+}
+
 export const scoreOf = (ms, hints) => ms + HINT_PENALTY_MS * hints;
 
-/** A display name: trimmed, control characters out, at most 20 characters, "Player" when empty */
+/** A display name: trimmed, control characters out, at most 20 characters, "Player" when empty or rude */
 export function cleanName(name) {
   if (typeof name !== "string") return "Player";
   const clean = Array.from(name.replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, "").trim()).slice(0, 20).join("").trim();
-  return clean || "Player";
+  return clean && !isBlockedName(clean) ? clean : "Player";
 }
 
 const bad = (error, status = 400) => ({ status, body: { error } });
@@ -51,6 +80,7 @@ export async function submitScore(env, body, now) {
   if (puzzles) {
     const wrong = verifySolution(kind, puzzles[kind], solution);
     if (wrong) return bad("solution is not right: " + wrong, 422);
+    if (ms < minimumMs(kind, puzzles[kind])) return bad("time not plausible for this puzzle", 422);
     verified = 1;
   }
   const score = scoreOf(ms, hints);
@@ -114,4 +144,24 @@ export async function ranking(env, date, kind, deviceId) {
       me: me ? { rank: me.rank, name: me.name, ms: me.ms, hints: me.hints, score: me.score, verified: me.verified === 1 } : null,
     },
   };
+}
+
+// ---- Owner: moderation (admin page) ----
+
+/** Every result of a date, best first per kind, with the device id cut short */
+export async function scoresOfDate(env, date) {
+  const { results } = await env.DB.prepare(
+    "SELECT id, kind, device_id, name, ms, hints, score, verified, created_at FROM scores WHERE date = ? ORDER BY kind, score, id"
+  ).bind(date).all();
+  return results;
+}
+
+/** "delete" removes a result; "hide" sets its name to Player. False when there was no such row */
+export async function moderate(env, id, action) {
+  if (!Number.isInteger(id) || id < 1) return false;
+  const statement = action === "delete"
+    ? env.DB.prepare("DELETE FROM scores WHERE id = ?").bind(id)
+    : action === "hide" ? env.DB.prepare("UPDATE scores SET name = 'Player' WHERE id = ?").bind(id) : null;
+  if (!statement) return false;
+  return (await statement.run()).meta.changes === 1;
 }

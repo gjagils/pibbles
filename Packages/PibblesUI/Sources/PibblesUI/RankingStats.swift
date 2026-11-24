@@ -51,7 +51,7 @@ enum ScoreUploader {
     }
 
     /// True when the server answered (also when it refused the result): only a missing
-    /// answer or a server error means "try again later".
+    /// answer, a server error or "too many requests" (429) means "try again later".
     static func send(_ body: String, path: String = "/scores") async -> Bool {
         guard let url = URL(string: base + path) else { return true }
         var request = URLRequest(url: url)
@@ -62,7 +62,7 @@ enum ScoreUploader {
         do {
             let (_, response) = try await URLSession.shared.data(for: request)
             if let http = response as? HTTPURLResponse {
-                return http.statusCode < 500
+                return http.statusCode < 500 && http.statusCode != 429
             }
             return true
         } catch {

@@ -26,7 +26,7 @@ export function testDb() {
       },
       // As in D1, a batch gives each statement's rows (results) and changes (meta)
       async inBatch() {
-        if (/^\s*SELECT/i.test(sql)) return { results: db.prepare(sql).all(...args), meta: { changes: 0 } };
+        if (/^\s*SELECT|RETURNING/i.test(sql)) return { results: db.prepare(sql).all(...args), meta: { changes: 0 } };
         return { results: [], ...(await statement.run()) };
       },
     };

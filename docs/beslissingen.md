@@ -72,3 +72,16 @@ mag worden teruggedraaid; de reden staat erbij.
     (of top 3 plus jouw rij). Offline staat je tijd in de ring. Knoppen: "Hele ranglijst"
     (opent die puzzel op het tabblad Ranglijst) en "Volgende: …". "Bekijk bord" sluit de
     uitslag; een balk opent hem weer. Archiefdagen hebben geen ranglijst.
+23. **Beveiliging van de ranglijst** (24 november, op verzoek van de eigenaar).
+    - Top, totaal en eigen plaats komen uit één batch: geen "plaats 2 van 1" meer.
+    - Snelste geloofwaardige tijd per puzzel: zetten × een snelle hand (Blocks 0,6 s per stuk,
+      Duo 0,15 s per leeg vak, Pixels 0,1 s per zwart vak, Signs en Sums 0,25 s per vak,
+      Stars 0,3 s per rij, Links 0,05 s per vak), minstens 3 s. Ruim gekozen: het houdt
+      scripts tegen, geen snelle spelers. Werkt alleen als het weekpakket op de server staat.
+    - Hooguit 20 uitslagen of naamwijzigingen per IP-adres per minuut, geteld in D1. De
+      rate-limit-binding van Cloudflare hield in een test 60 snelle verzoeken niet tegen
+      (benadering per locatie), daarom een eigen teller.
+    - Grove namen worden "Player"; moderatiepagina `/admin/scores/<datum>` om een naam te
+      verbergen of een uitslag te verwijderen.
+    - Weekpakketten moeten elke week op de server: zonder pakket wordt geen antwoord
+      nagerekend. Ontdekt op 24 november: er stond nog geen enkel pakket.

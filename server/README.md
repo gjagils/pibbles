@@ -22,13 +22,18 @@ Zeven puzzelsoorten (`docs/puzzels.md`): `blocks`, `logic` (Duo), `stars`, `patt
 | `GET /api/day/<datum>` | De zeven puzzels van die dag zonder `solution`. 403 als de dag nog nergens op aarde begonnen is (UTC+14), 404 als geen pakket de dag bevat; de app maakt de puzzel dan zelf. |
 | `POST /api/scores` | `{date, kind, deviceId, name, ms, hints, solution}`. 201 opgeslagen, 200 als dit toestel al een resultaat had (dat blijft staan, `accepted:false`), 422 fout antwoord, 400/403 ongeldig. Antwoord: `{accepted, rank, name, ms, hints, score, verified}`. |
 | `GET /api/scores/<datum>/<soort>?deviceId=…` | `{date, kind, total, top:[{rank,name,ms,hints,score,verified}], me}` (top 50; `me` is je eigen plaats of `null`). |
+| `POST /api/name` | `{deviceId, name}`: nieuwe naam op de uitslagen van dit toestel van vandaag en gisteren. |
 | `GET /admin/week/<maandag>?key=<ADMIN_KEY>` | HTML-voorbeeld van alle 49 puzzels van de week, met een schakelaar voor de oplossingen. |
+| `GET /admin/scores/<datum>?key=<ADMIN_KEY>` | Moderatie: alle uitslagen van die dag per puzzel, met knoppen "Hide name" (naam wordt Player) en "Delete". De knoppen posten naar hetzelfde adres met de sleutel in het formulier. |
 
 Regels bij scores: score = ms + 30 000 × hints; tijden onder 3 s of boven 24 uur worden
-geweigerd; alleen vandaag of gisteren (ruim genomen over alle tijdzones); alleen het eerste
+geweigerd, en bij een nagerekend antwoord ook tijden onder de snelste geloofwaardige tijd
+voor die puzzel (`minimumMs`: aantal zetten × een snelle hand per zet, 422); meer dan 20
+uitslagen of naamwijzigingen per IP-adres per minuut krijgen 429 (teller in D1,
+`rate_limits`; de app probeert het later opnieuw); alleen vandaag of gisteren (ruim genomen over alle tijdzones); alleen het eerste
 resultaat per toestel, datum en soort telt. Staat de dag in een pakket, dan wordt het
 antwoord nagerekend (`verified: true`); zonder pakket wordt de score bewaard met
-`verified: false`. Naam: ingekort tot 20 tekens, leeg wordt "Player". `deviceId`: 8–64
+`verified: false`. Naam: ingekort tot 20 tekens, leeg of grof (korte lijst in `scores.js`) wordt "Player". `deviceId`: 8–64
 tekens `A-Z a-z 0-9 -`.
 
 ## Lokaal
@@ -75,6 +80,15 @@ curl -X PUT https://pibbles.app/api/admin/week \
   -H "Authorization: Bearer $ADMIN_KEY" \
   -H "content-type: application/json" \
   --data-binary @week-2026-11-30.json
+```
+
+Zonder `ADMIN_KEY` bij de hand, maar met wrangler-toegang, kan het ook rechtstreeks in D1
+na dezelfde controle:
+
+```bash
+swift run -c release --package-path tools/PackBuilder PackBuilder 2026-11-30 > week.json
+node server/scripts/week-sql.js week.json > week.sql
+(cd server && npx wrangler d1 execute pibbles --remote --file ../week.sql)
 ```
 
 Daarna bekijken: `https://pibbles.app/admin/week/2026-11-30?key=<ADMIN_KEY>`. De sleutel

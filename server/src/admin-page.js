@@ -212,3 +212,39 @@ export function adminMessagePage(title, message) {
 @media (prefers-color-scheme:dark){body{background:#1F1E2E;color:#EDE8F5}}</style></head>
 <body><div>${LOGO_SVG.replace("<svg", '<svg width="72" height="72"')}<h1>${esc(title)}</h1><p>${esc(message)}</p></div></body></html>`;
 }
+
+const clock = (ms) => {
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
+const DONE = { delete: "Result deleted.", hide: "Name hidden.", none: "Nothing changed: that result was already gone." };
+
+/** Moderation: a date's results per puzzle, each with "Hide name" and "Delete" */
+export function adminScoresPage(date, rows, key, done) {
+  const kinds = [...new Set(rows.map((r) => r.kind))];
+  const button = (row, action, label) =>
+    `<form method="post"><input type="hidden" name="key" value="${esc(key)}"><input type="hidden" name="id" value="${row.id}"><input type="hidden" name="action" value="${action}"><button class="${action}">${label}</button></form>`;
+  const sections = kinds.map((kind) => {
+    const list = rows.filter((r) => r.kind === kind);
+    const lines = list.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${clock(r.ms)}${r.hints ? ` +${r.hints}h` : ""}</td><td>${r.verified ? "✓" : "?"}</td><td class="dev">${esc(r.device_id.slice(0, 8))}</td><td>${r.name === "Player" ? "" : button(r, "hide", "Hide name")}</td><td>${button(r, "delete", "Delete")}</td></tr>`).join("");
+    return `<section><h2>${esc(DISPLAY_NAMES[kind] || kind)} <small>${list.length}</small></h2><table>${lines}</table></section>`;
+  }).join("");
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Results ${esc(date)} · Pibbles</title><style>
+:root{--bg:#FAF7F2;--ink:#2D2A41;--muted:#7C7891;--card:#fff;--line:#ECE6DD;--rose:#D9667A;--purple:#6D5B8C}
+@media (prefers-color-scheme:dark){:root{--bg:#1F1E2E;--ink:#EDE8F5;--muted:#A7A2B8;--card:#2A2940;--line:#3A3852}}
+body{font-family:ui-rounded,system-ui,sans-serif;background:var(--bg);color:var(--ink);margin:0;padding:16px;max-width:760px;margin-inline:auto}
+h1{font-size:22px}h2{font-size:17px;margin:0 0 8px}small{color:var(--muted);font-weight:400}
+.done{background:var(--card);border-left:4px solid var(--purple);padding:8px 12px;border-radius:8px}
+section{background:var(--card);border-radius:14px;padding:12px 14px;margin:12px 0;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}td{padding:6px 6px;border-top:1px solid var(--line);white-space:nowrap}
+td.dev{color:var(--muted);font-family:ui-monospace,monospace;font-size:12px}form{margin:0}
+button{font:inherit;font-size:13px;border-radius:99px;padding:4px 10px;border:1px solid var(--purple);background:none;color:var(--purple);cursor:pointer}
+button.delete{border-color:var(--rose);color:var(--rose)}
+</style></head><body>
+<h1>Results of ${esc(dayTitle(date))} <small>owner only</small></h1>
+${done && DONE[done] ? `<p class="done">${DONE[done]}</p>` : ""}
+${sections || "<p>No results for this date.</p>"}
+<p><small>Hide name sets it to Player. Delete removes the result; that device can then send a new one for this puzzle while the day still takes scores. ✓ = answer checked against the puzzle.</small></p>
+</body></html>`;
+}
