@@ -10,8 +10,9 @@ import Foundation
 ///    cage starts one with a target size drawn from the weekday's weights (1…4 cells; easier
 ///    days more single cells and pairs, harder days more triples and quads) and grows by a
 ///    random free orthogonal neighbour of the cage until the target is reached or no free
-///    neighbour is left. A cell that wanted company but is boxed in joins the smallest
-///    neighbouring cage with fewer than four cells.
+///    neighbour is left. A number appears at most once in a cage, so a neighbour whose
+///    number the cage already holds is not free. A cell that wanted company but is boxed in
+///    joins the smallest neighbouring cage with fewer than four cells that lacks its number.
 /// 3. The sums follow from the solution. When the solver finds a second solution, a cell is
 ///    picked at random among the cells where the two differ and split off its cage as a
 ///    single cell (the rest of that cage is split into its connected parts). At most
@@ -68,7 +69,7 @@ public enum SumsGenerator {
     /// nil when the puzzle is still ambiguous after `splits` splits.
     private static func build(size: Int, weights: [Int], splits: Int, random: SeededRandom) -> SumsPuzzle? {
         let solution = latinSquare(size: size, random: random)
-        var cages = randomCages(size: size, weights: weights, random: random)
+        var cages = randomCages(size: size, weights: weights, solution: solution, random: random)
         var left = splits
         while true {
             let sums = cageSums(cages, solution)
@@ -116,8 +117,19 @@ public enum SumsGenerator {
         return list
     }
 
-    /// Step 2: random connected cages, ids renumbered in order of each cage's first cell.
-    static func randomCages(size: Int, weights: [Int], random: SeededRandom) -> [Int] {
+    /// True when a cell of cage `id` holds `value`.
+    static func cageHolds(_ cage: [Int], _ id: Int, _ value: Int, _ solution: [Int]) -> Bool {
+        var cell = 0
+        while cell < cage.count {
+            if cage[cell] == id && solution[cell] == value { return true }
+            cell += 1
+        }
+        return false
+    }
+
+    /// Step 2: random connected cages with distinct numbers, ids renumbered in order of each
+    /// cage's first cell.
+    static func randomCages(size: Int, weights: [Int], solution: [Int], random: SeededRandom) -> [Int] {
         let cells = size * size
         var cage = Array(repeating: -1, count: cells)
         var cageSize = [Int]()
@@ -147,7 +159,7 @@ public enum SumsGenerator {
                 var frontier = [Int]()
                 var cell = 0
                 while cell < cells {
-                    if cage[cell] < 0 {
+                    if cage[cell] < 0 && !cageHolds(cage, id, solution[cell], solution) {
                         for neighbour in neighbours(cell, size) {
                             if cage[neighbour] == id {
                                 frontier.append(cell)
@@ -169,6 +181,7 @@ public enum SumsGenerator {
                 for neighbour in neighbours(start, size) {
                     let other = cage[neighbour]
                     if other < 0 || other == id || cageSize[other] >= 4 { continue }
+                    if cageHolds(cage, other, solution[start], solution) { continue }
                     if best < 0 || cageSize[other] < cageSize[best] { best = other }
                 }
                 if best >= 0 {

@@ -156,10 +156,16 @@ export function verifyLinks(p, solution) {
   return total === n * n ? null : "cells left empty";
 }
 
-/** Sums: Latin square of 1..n and every cage adds up to its sum */
+/** Sums: Latin square of 1..n, no number twice in a cage, and every cage adds up to its sum */
 export function verifySums(p, solution) {
   const wrong = latin(solution, p.size);
   if (wrong) return wrong;
+  const seen = new Set();
+  for (let i = 0; i < solution.length; i++) {
+    const key = p.cages[i] * 100 + solution[i];
+    if (seen.has(key)) return "number twice in a cage";
+    seen.add(key);
+  }
   const totals = new Array(p.sums.length).fill(0);
   p.cages.forEach((cage, i) => (totals[cage] += solution[i]));
   return totals.every((t, i) => t === p.sums[i]) ? null : "cage sum wrong";

@@ -4,13 +4,14 @@ import Foundation
 ///
 /// Each cell keeps its candidates as a bit mask (bit v set = value v still possible; sizes
 /// up to 16 fit easily in Kotlin's 32-bit `Int`). Propagation repeats until nothing changes:
-/// - a fixed cell removes its value from the other cells in its row and column;
+/// - a fixed cell removes its value from the other cells in its row, its column and its cage
+///   (a number appears at most once in a cage);
 /// - a value with one place left in a row or column goes there (hidden single);
 /// - cage bounds: with `min`/`max` the sums of the smallest/largest candidates of the cage's
 ///   cells, a cell may only keep values v with
 ///   `sum - (max - largest(cell)) <= v <= sum - (min - smallest(cell))`;
-/// - a two-cell cage keeps in each cell only values whose partner `sum - v` is still a
-///   candidate of the other cell.
+/// - a two-cell cage keeps in each cell only values whose partner `sum - v` (never v
+///   itself) is still a candidate of the other cell.
 /// Then the search branches on the cell with the fewest candidates, values ascending.
 public enum SumsSolver {
     /// The number of solutions, at most `limit`. 0 for malformed input: size outside 1…16,
@@ -107,7 +108,7 @@ private final class SumsSearch {
     let sums: [Int]
     /// Rows then columns: each a list of cell indices.
     let units: [[Int]]
-    /// Per cell the other cells in its row and column.
+    /// Per cell the other cells in its row, its column and its cage (each once).
     let peers: [[Int]]
     var count = 0
     var found = [[Int]]()
@@ -153,6 +154,13 @@ private final class SumsSearch {
                 if k != cellCol { list.append(cellRow * size + k) }
                 if k != cellRow { list.append(k * size + cellCol) }
                 k += 1
+            }
+            for cells in cageCells {
+                if cells.contains(cell) {
+                    for mate in cells {
+                        if mate != cell && !list.contains(mate) { list.append(mate) }
+                    }
+                }
             }
             peerList.append(list)
             cell += 1
@@ -275,7 +283,7 @@ private final class SumsSearch {
                         var value = 1
                         while value <= size {
                             let other = target - value
-                            if SumsBits.has(reduced, value) && other >= 1 && other <= size
+                            if SumsBits.has(reduced, value) && other >= 1 && other <= size && other != value
                                 && SumsBits.has(cand[partner], other) {
                                 paired = (paired | (1 << value))
                             }

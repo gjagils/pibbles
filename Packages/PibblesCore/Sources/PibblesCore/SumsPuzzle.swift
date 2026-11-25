@@ -1,8 +1,8 @@
 import Foundation
 
 /// Sums: fill a `size` × `size` grid with 1…size so every row and column holds each number
-/// once; the grid is split into connected cages and the numbers in a cage add up to the
-/// cage's sum. No givens; exactly one solution.
+/// once; the grid is split into connected cages, a number appears at most once in a cage,
+/// and the numbers in a cage add up to the cage's sum. No givens; exactly one solution.
 /// JSON: `{"size":5,"cages":[0,0,1,...],"sums":[11,4,...],"solution":[...]}`.
 public struct SumsPuzzle: Hashable, Codable, Sendable {
     public let size: Int
@@ -24,8 +24,8 @@ public struct SumsPuzzle: Hashable, Codable, Sendable {
 /// The rules the play screen asks: is the grid solved, which filled cells clash, and where
 /// each cage's sum is written.
 public enum SumsRules {
-    /// Every cell filled with 1…size, each number once per row and column, and every cage
-    /// adds up to its sum. Does not look at `puzzle.solution`. `values` row by row, 0 = empty.
+    /// Every cell filled with 1…size, each number once per row, column and cage, and every
+    /// cage adds up to its sum. Does not look at `puzzle.solution`. `values` row by row, 0 = empty.
     public static func isSolved(_ puzzle: SumsPuzzle, values: [Int]) -> Bool {
         let n = puzzle.size
         if !wellFormed(puzzle) || values.count != n * n { return false }
@@ -35,8 +35,8 @@ public enum SumsRules {
         return conflicts(puzzle, values: values).isEmpty
     }
 
-    /// Indices (ascending) of filled cells that clash: the same number twice in a row or
-    /// column; every filled cell of a cage whose filled values add up to more than its sum;
+    /// Indices (ascending) of filled cells that clash: the same number twice in a row,
+    /// column or cage; every filled cell of a cage whose filled values add up to more than its sum;
     /// every cell of a full cage with the wrong sum. Empty cells (0) never clash.
     public static func conflicts(_ puzzle: SumsPuzzle, values: [Int]) -> [Int] {
         let n = puzzle.size
@@ -67,6 +67,19 @@ public enum SumsRules {
                 a += 1
             }
             line += 1
+        }
+        // Same number twice in a cage.
+        var one = 0
+        while one < n * n {
+            var two = one + 1
+            while two < n * n {
+                if values[one] != 0 && values[one] == values[two] && puzzle.cages[one] == puzzle.cages[two] {
+                    bad[one] = true
+                    bad[two] = true
+                }
+                two += 1
+            }
+            one += 1
         }
         let cageCount = puzzle.sums.count
         var filledTotal = Array(repeating: 0, count: cageCount)

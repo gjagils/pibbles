@@ -64,6 +64,7 @@ vakken van het pad, van stip tot stip).
 ## Sums
 
 Vul een n×n-veld met 1..n, in elke rij en kolom elk getal één keer; de getallen in een
-omlijnd blok tellen op tot de som van dat blok. Niveaus: 4, 4, 5, 5, 5, 6, 6. JSON:
+omlijnd blok tellen op tot de som van dat blok, en in een blok staat elk getal hooguit één
+keer (sinds 25 november 2026). Niveaus: 4, 4, 5, 5, 5, 6, 6. JSON:
 `{"size":5,"cages":[4,4,9,...],"sums":[11,4,...],"solution":[...]}` (`cages`: bloknummer
 per vak, 0..k-1; `sums`: som per blok).

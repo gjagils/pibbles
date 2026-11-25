@@ -7,10 +7,10 @@ final class SumsRulesTests: XCTestCase {
     /// 2 1 4 3
     /// 3 4 1 2
     /// 4 3 2 1
-    /// Cages: {0,1,4}=5, {2,3}=7, {5,6,7}=8, {8,12}=7, {9,10,11}=7, {13,14,15}=6.
+    /// Cages: {0,1}=3, {2,3}=7, {4,8,12}=9, {5,9}=5, {6,7,11}=9, {10,13,14}=6, {15}=1.
     private let solution = [1, 2, 3, 4, 2, 1, 4, 3, 3, 4, 1, 2, 4, 3, 2, 1]
-    private let cages = [0, 0, 1, 1, 0, 2, 2, 2, 3, 4, 4, 4, 3, 5, 5, 5]
-    private let sums = [5, 7, 8, 7, 7, 6]
+    private let cages = [0, 0, 1, 1, 2, 3, 4, 4, 2, 3, 5, 4, 2, 5, 5, 6]
+    private let sums = [3, 7, 9, 5, 9, 6, 1]
 
     private func puzzle() -> SumsPuzzle {
         return SumsPuzzle(size: 4, cages: cages, sums: sums, solution: solution)
@@ -34,10 +34,10 @@ final class SumsRulesTests: XCTestCase {
     }
 
     func testLatinSquareWithWrongSumsIsNotSolved() {
-        // Rows 0 and 1 swapped: still a Latin square, but cage 0 adds up to 4.
+        // Rows 0 and 1 swapped: still a Latin square, but cages 2 and 3 add up to 8 and 6.
         let values = [2, 1, 4, 3, 1, 2, 3, 4, 3, 4, 1, 2, 4, 3, 2, 1]
         XCTAssertFalse(SumsRules.isSolved(puzzle(), values: values))
-        XCTAssertEqual(SumsRules.conflicts(puzzle(), values: values), [0, 1, 4, 5, 6, 7])
+        XCTAssertEqual(SumsRules.conflicts(puzzle(), values: values), [4, 5, 8, 9, 12])
     }
 
     func testSolvedDoesNotCompareWithSolution() {
@@ -59,13 +59,23 @@ final class SumsRulesTests: XCTestCase {
 
     func testPartialCageOverItsSum() {
         var values = empty()
-        values[0] = 1
+        values[10] = 1
         XCTAssertEqual(SumsRules.conflicts(puzzle(), values: values), [Int]())
-        values[1] = 4
+        values[13] = 4
         XCTAssertEqual(SumsRules.conflicts(puzzle(), values: values), [Int]())
-        values[0] = 3
-        // 3 + 4 > 5: both filled cells of cage 0 clash, the empty one does not.
-        XCTAssertEqual(SumsRules.conflicts(puzzle(), values: values), [0, 1])
+        values[10] = 3
+        // 3 + 4 > 6: both filled cells of cage 5 clash, the empty one does not.
+        XCTAssertEqual(SumsRules.conflicts(puzzle(), values: values), [10, 13])
+    }
+
+    func testSameNumberTwiceInACage() {
+        // Cells 6 and 11 share cage 4 but no row or column; 2 + 2 stays under 9.
+        var values = empty()
+        values[6] = 2
+        values[11] = 2
+        XCTAssertEqual(SumsRules.conflicts(puzzle(), values: values), [6, 11])
+        values[11] = 3
+        XCTAssertEqual(SumsRules.conflicts(puzzle(), values: values), [Int]())
     }
 
     func testFullCageWithWrongSum() {
@@ -78,7 +88,7 @@ final class SumsRulesTests: XCTestCase {
     }
 
     func testCageLabelCells() {
-        XCTAssertEqual(SumsRules.cageLabelCells(puzzle()), [0, 2, 5, 8, 9, 13])
+        XCTAssertEqual(SumsRules.cageLabelCells(puzzle()), [0, 2, 4, 5, 6, 10, 15])
     }
 }
 
@@ -87,10 +97,19 @@ final class SumsSolverTests: XCTestCase {
         return SumsSolver.countSolutions(size: size, cages: cages, sums: sums, limit: 10)
     }
 
-    func testOneCageCountsLatinSquares() {
-        XCTAssertEqual(count(2, [0, 0, 0, 0], [6]), 2)
-        XCTAssertEqual(SumsSolver.countSolutions(size: 3, cages: [Int](repeating: 0, count: 9), sums: [18], limit: 100), 12)
-        XCTAssertEqual(SumsSolver.countSolutions(size: 4, cages: [Int](repeating: 0, count: 16), sums: [40], limit: 1000), 576)
+    func testRowCagesCountLatinSquares() {
+        XCTAssertEqual(count(2, [0, 0, 1, 1], [3, 3]), 2)
+        XCTAssertEqual(SumsSolver.countSolutions(size: 3, cages: [0, 0, 0, 1, 1, 1, 2, 2, 2], sums: [6, 6, 6], limit: 100), 12)
+        XCTAssertEqual(SumsSolver.countSolutions(size: 4, cages: [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],
+                                                 sums: [10, 10, 10, 10], limit: 1000), 576)
+    }
+
+    func testANumberAppearsOnceInACage() {
+        // A cage needing the same number twice has no solution: more cells than numbers,
+        // or the diagonal of a 2×2 square (1 + 1).
+        XCTAssertEqual(count(2, [0, 0, 0, 0], [6]), 0)
+        XCTAssertEqual(count(2, [0, 1, 1, 0], [2, 4]), 0)
+        XCTAssertEqual(count(2, [0, 1, 1, 0], [4, 2]), 0)
     }
 
     func testSingleCellsAreUnique() {
@@ -110,8 +129,8 @@ final class SumsSolverTests: XCTestCase {
         // Two rows of 3: both 2×2 Latin squares fit.
         XCTAssertEqual(count(2, [0, 0, 1, 1], [3, 3]), 2)
         XCTAssertEqual(SumsSolver.countSolutions(size: 2, cages: [0, 0, 1, 1], sums: [3, 3], limit: 1), 1)
-        // Order 3 with only the first cell fixed.
-        XCTAssertEqual(count(3, [0, 1, 1, 1, 1, 1, 1, 1, 1], [1, 17]), 4)
+        // Order 3 with only the first cell fixed and the other cages whole rows.
+        XCTAssertEqual(count(3, [0, 1, 1, 2, 2, 2, 3, 3, 3], [1, 5, 6, 6]), 4)
     }
 
     func testImpossible() {
@@ -141,25 +160,26 @@ final class SumsGeneratorTests: XCTestCase {
         XCTAssertEqual(puzzle.sums, sums, seed)
     }
 
-    /// Recorded from a Swift run; the same test runs in Kotlin through Skip, so both agree.
+    /// Recorded from a Swift run (with distinct numbers per cage, since 25 November 2026); the
+    /// same test runs in Kotlin through Skip, so both agree.
     /// Seeds `sums|2026-11-23` (Monday) … `sums|2026-11-29` (Sunday).
     func testFingerprints() {
-        check(0, cages: [0, 0, 1, 1, 2, 0, 1, 1, 2, 3, 3, 4, 5, 5, 3, 4],
-              sums: [6, 11, 4, 9, 4, 6])
+        check(0, cages: [0, 1, 2, 3, 0, 1, 4, 3, 5, 5, 4, 3, 6, 6, 6, 3],
+              sums: [5, 4, 1, 10, 6, 5, 9])
         check(1, cages: [0, 0, 1, 1, 0, 2, 3, 3, 4, 2, 5, 6, 4, 7, 8, 9],
               sums: [9, 3, 3, 7, 4, 3, 4, 4, 2, 1])
-        check(2, cages: [0, 1, 2, 2, 2, 1, 1, 1, 3, 3, 4, 4, 5, 5, 3, 6, 7, 8, 9, 9, 10, 10, 11, 11, 9],
-              sums: [4, 8, 9, 10, 8, 6, 5, 1, 3, 11, 5, 5])
-        check(3, cages: [0, 0, 1, 1, 1, 2, 0, 0, 1, 3, 2, 4, 4, 3, 3, 2, 4, 4, 5, 6, 2, 7, 7, 7, 6],
-              sums: [12, 10, 11, 10, 17, 4, 5, 6])
-        check(4, cages: [0, 1, 1, 2, 2, 0, 0, 3, 3, 4, 5, 5, 3, 6, 4, 7, 8, 8, 6, 4, 7, 9, 8, 10, 10],
-              sums: [7, 9, 3, 9, 8, 6, 9, 6, 8, 2, 8])
-        check(5, cages: [0, 0, 0, 0, 1, 1, 2, 3, 3, 4, 4, 1, 5, 5, 6, 4, 7, 7, 8, 8, 6, 6, 9, 10, 8, 11, 11, 12,
-                         9, 10, 13, 13, 11, 12, 14, 15],
-              sums: [13, 14, 5, 5, 6, 11, 11, 5, 11, 5, 6, 12, 10, 3, 5, 4])
-        check(6, cages: [0, 1, 2, 3, 3, 3, 0, 1, 2, 2, 2, 4, 5, 6, 7, 8, 8, 4, 5, 9, 10, 8, 11, 11, 12, 12, 13, 8,
-                         11, 14, 15, 15, 13, 13, 14, 14],
-              sums: [7, 9, 16, 9, 4, 10, 6, 2, 12, 3, 1, 15, 4, 15, 10, 3])
+        check(2, cages: [0, 1, 2, 3, 4, 0, 1, 1, 1, 5, 6, 6, 6, 5, 5, 7, 8, 9, 9, 10, 11, 11, 12, 10, 10],
+              sums: [6, 11, 5, 1, 3, 7, 12, 5, 1, 7, 10, 5, 2])
+        check(3, cages: [0, 1, 1, 2, 2, 0, 1, 3, 2, 4, 5, 1, 6, 4, 4, 5, 5, 7, 8, 9, 5, 10, 10, 10, 9],
+              sums: [7, 12, 9, 2, 10, 11, 4, 5, 4, 5, 6])
+        check(4, cages: [0, 0, 1, 1, 2, 3, 3, 1, 1, 2, 3, 3, 4, 5, 6, 7, 8, 8, 5, 6, 7, 9, 10, 6, 6],
+              sums: [6, 10, 6, 14, 5, 8, 13, 5, 3, 3, 2])
+        check(5, cages: [0, 1, 2, 3, 4, 5, 0, 0, 6, 3, 4, 4, 7, 8, 8, 3, 9, 9, 7, 10, 11, 12, 12, 13, 14, 10, 11, 15,
+                         15, 13, 14, 10, 11, 16, 16, 17],
+              sums: [14, 5, 4, 6, 7, 6, 2, 8, 6, 7, 9, 10, 6, 5, 5, 11, 10, 5])
+        check(6, cages: [0, 1, 1, 2, 3, 3, 0, 1, 2, 2, 2, 4, 5, 6, 7, 8, 8, 4, 5, 7, 7, 8, 9, 9, 10, 10, 11, 8,
+                         9, 12, 13, 13, 11, 11, 12, 12],
+              sums: [7, 12, 14, 8, 4, 10, 6, 6, 12, 15, 4, 15, 10, 3])
     }
 
     func testSizes() {
@@ -214,6 +234,16 @@ final class SumsGeneratorTests: XCTestCase {
             if id == nextId { nextId += 1 }
         }
         XCTAssertEqual(nextId, puzzle.sums.count, label)
+        // No number twice in a cage.
+        var a = 0
+        while a < n * n {
+            var b = a + 1
+            while b < n * n {
+                if puzzle.cages[a] == puzzle.cages[b] { XCTAssertNotEqual(puzzle.solution[a], puzzle.solution[b], label) }
+                b += 1
+            }
+            a += 1
+        }
         // Every cage has 1…4 cells and its sum matches the solution.
         var totals = [Int](repeating: 0, count: puzzle.sums.count)
         var counts = [Int](repeating: 0, count: puzzle.sums.count)

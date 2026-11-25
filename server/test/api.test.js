@@ -174,6 +174,9 @@ test("a wrong answer is refused when the pack holds the day", async () => {
   assert.equal((await score({ kind: "links", solution: day.links.solution.slice(1) })).status, 422);
   // A path may be walked from either dot
   assert.equal((await score({ kind: "links", solution: day.links.solution.map((p) => p.slice().reverse()) })).status, 201);
+  // A Latin square with the right cage sums but a number twice in a cage is refused
+  const { verifySums } = await import("../src/verify.js");
+  assert.equal(verifySums({ size: 2, cages: [0, 1, 1, 0], sums: [2, 4] }, [1, 2, 2, 1]), "number twice in a cage");
   const sums = day.sums.solution.map((v) => (v % day.sums.size) + 1);
   assert.equal((await score({ kind: "sums", solution: sums })).status, 422);
   assert.equal((await score({ kind: "sums", solution: day.sums.solution })).status, 201);

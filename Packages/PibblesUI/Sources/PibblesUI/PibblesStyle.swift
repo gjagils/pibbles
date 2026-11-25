@@ -155,7 +155,8 @@ public enum KindInfo {
         case PuzzleKind.sums:
             return [T.s("Fill every square with a number from 1 up to the size of the board.", "Vul elk vak met een getal van 1 tot de grootte van het veld."),
                     T.s("Each number appears once in every row and column.", "Elk getal staat één keer in elke rij en kolom."),
-                    T.s("The numbers in an outlined block add up to its small number.", "De getallen in een omlijnd blok tellen op tot het kleine getal.")]
+                    T.s("The numbers in an outlined block add up to its small number.", "De getallen in een omlijnd blok tellen op tot het kleine getal."),
+                    T.s("A number appears at most once in a block.", "In een blok staat elk getal hooguit één keer.")]
         }
     }
 }

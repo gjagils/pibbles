@@ -85,3 +85,11 @@ mag worden teruggedraaid; de reden staat erbij.
       verbergen of een uitslag te verwijderen.
     - Weekpakketten moeten elke week op de server: zonder pakket wordt geen antwoord
       nagerekend. Ontdekt op 24 november: er stond nog geen enkel pakket.
+24. **Feedback van Nelleke** (25 november, op verzoek van de eigenaar).
+    - Signs: de tekens tussen de vakken zijn dikke getekende pijlpunten die naar het kleinere
+      getal wijzen, met meer ruimte tussen de vakken. De dunne < > ∧ ∨ las ze steeds verkeerd.
+    - Sums: in een blok staat elk getal hooguit één keer, zoals in killer sudoku. Meteen
+      ingevoerd, ook voor deze week (er zijn twee spelers): alle Sums-puzzels zijn veranderd
+      (dinsdag 24 november toevallig niet). De weekpakketten van 23 en 30 november op de server
+      zijn vervangen; de server keurt een blok met een dubbel getal af. Een toestel met een
+      oude versie krijgt een ander Sums-bord dan de server en zijn uitslag wordt afgekeurd.
