@@ -21,7 +21,8 @@ final class PatternsGeneratorTests: XCTestCase {
     }
 
     func testFingerprintTuesday() {
-        check(1, "2026-11-24", solution: [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0])
+        check(1, "2026-11-24", solution: [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1,
+                                          0])
     }
 
     func testFingerprintWednesday() {
@@ -30,33 +31,27 @@ final class PatternsGeneratorTests: XCTestCase {
     }
 
     func testFingerprintThursday() {
-        check(3, "2026-11-26", solution: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0,
-                                          0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0])
+        check(3, "2026-11-26", solution: [0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+                                          1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0])
     }
 
     func testFingerprintFriday() {
-        check(4, "2026-11-27", solution: [0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0,
-                                          0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1,
-                                          1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0])
+        check(4, "2026-11-27", solution: [1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0,
+                                          0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1])
     }
 
     func testFingerprintSaturday() {
-        check(5, "2026-11-28", solution: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0,
-                                          1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0,
-                                          1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1,
-                                          1, 0, 1, 0, 0, 0, 1, 0, 1])
+        check(5, "2026-11-28", solution: [0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0,
+                                          1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1])
     }
 
     func testFingerprintSunday() {
-        check(6, "2026-11-29", solution: [1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1,
-                                          0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1,
-                                          0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0,
-                                          1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1,
-                                          1, 1, 0, 1])
+        check(6, "2026-11-29", solution: [1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0,
+                                          0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1])
     }
 
     func testSizesRunFromMondayToSunday() {
-        XCTAssertEqual(PatternsGenerator.sizes, [5, 5, 6, 7, 8, 9, 10])
+        XCTAssertEqual(PatternsGenerator.sizes, [5, 5, 6, 6, 6, 6, 6])
     }
 
     func testSameSeedGivesTheSamePuzzle() {
@@ -68,7 +63,7 @@ final class PatternsGeneratorTests: XCTestCase {
 
     func testWeekdayOutsideTheWeekIsClamped() {
         XCTAssertEqual(PatternsGenerator.generate(weekday: -3, seed: "x").size, 5)
-        XCTAssertEqual(PatternsGenerator.generate(weekday: 9, seed: "x").size, 10)
+        XCTAssertEqual(PatternsGenerator.generate(weekday: 9, seed: "x").size, 6)
     }
 
     /// Valid, unique and not dull, on fresh seeds for every weekday.

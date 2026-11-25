@@ -16,7 +16,7 @@ import Foundation
 /// pass `PuzzleKind.logic.seed(dateKey:)` as seed.
 public enum LogicGenerator {
     /// Grid size per weekday, Monday … Sunday.
-    public static let sizes: [Int] = [6, 6, 8, 8, 8, 10, 10]
+    public static let sizes: [Int] = [6, 6, 8, 8, 8, 8, 8]
     static let fullGridBudget = 200000
 
     public static func generate(weekday: Int, seed: String) -> LogicPuzzle {

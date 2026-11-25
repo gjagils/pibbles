@@ -15,7 +15,7 @@ const SHAPE_KEYS = Object.keys(SHAPES);
 // Weekritme: maandag makkelijk, zondag het moeilijkst.
 const WEEK = [
   { n:5, pieces:4 }, { n:5, pieces:5 }, { n:6, pieces:5 }, { n:6, pieces:6 },
-  { n:6, pieces:7 }, { n:7, pieces:7 }, { n:7, pieces:8 },
+  { n:6, pieces:7 }, { n:6, pieces:7 }, { n:6, pieces:8 },
 ];
 const DAYS = ['ma','di','wo','do','vr','za','zo'];
 // ---- Streak rules (pure) ----

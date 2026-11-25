@@ -6,7 +6,7 @@ final class DailyTests: XCTestCase {
         // 22 November 2026 is a Sunday; the prototype's puzzle for that date.
         let day = PuzzleCalendar.dayNumber(year: 2026, month: 11, day: 22)
         let puzzle = Daily.blocks(day: day)
-        XCTAssertEqual(puzzle?.pieces, ["T4d", "L3c", "T4d", "L4c", "I3v", "L3b", "L3b", "L3c"])
+        XCTAssertEqual(puzzle?.pieces, ["L4b", "I3v", "L3d", "I3", "I3", "I3v", "L3b", "L4d"])
     }
 
     func testOtherKindsFollowTheWeekday() {
@@ -14,7 +14,7 @@ final class DailyTests: XCTestCase {
         XCTAssertEqual(Daily.logic(day: monday).size, 6)
         XCTAssertEqual(Daily.patterns(day: monday).size, 5)
         XCTAssertEqual(Daily.numbers(day: monday).size, 4)
-        XCTAssertEqual(Daily.logic(day: monday + 6).size, 10)
+        XCTAssertEqual(Daily.logic(day: monday + 6).size, 8)
     }
 
     func testDifficultyNames() {

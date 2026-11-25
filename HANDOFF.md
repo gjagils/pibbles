@@ -31,7 +31,7 @@ Elke dag één puzzel, oplopend van maandag naar zondag:
 
 | ma | di | wo | do | vr | za | zo |
 |---|---|---|---|---|---|---|
-| 5×5, 4 | 5×5, 5 | 6×6, 5 | 6×6, 6 | 6×6, 7 | 7×7, 7 | 7×7, 8 |
+| 5×5, 4 | 5×5, 5 | 6×6, 5 | 6×6, 6 | 6×6, 7 | 6×6, 7 | 6×6, 8 |
 
 Wens van de eigenaar: op zondag wordt het pakket van zeven puzzels voor de komende
 week aangemaakt en klaargezet, zodat het vooraf te bekijken is. Het prototype

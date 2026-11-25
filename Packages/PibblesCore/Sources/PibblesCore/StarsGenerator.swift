@@ -33,7 +33,7 @@ struct StarsGeneration {
 /// tested seed, but it keeps `generate` total.
 public enum StarsGenerator {
     /// Grid size per weekday, Monday 0 … Sunday 6.
-    public static let sizes: [Int] = [5, 6, 6, 7, 7, 8, 8]
+    public static let sizes: [Int] = [5, 5, 6, 6, 6, 7, 7]
     static let maxRepairs = 40
     /// Measured over 400 seeds per size: on average 1 (size 5) to 10 (size 8) attempts, at
     /// worst 51 for size 8. The limits leave a wide margin.

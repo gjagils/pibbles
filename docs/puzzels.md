@@ -29,13 +29,13 @@ Controle: elk blok ligt binnen het veld op `solution[i]`, geen overlap, tellinge
 ## Logic (binaire puzzel)
 
 Vul elk vak met 0 of 1. Per rij en kolom evenveel nullen als enen; nergens drie gelijke
-naast of onder elkaar. Niveaus: 6, 6, 8, 8, 8, 10, 10. JSON:
+naast of onder elkaar. Niveaus: 6, 6, 8, 8, 8, 8, 8. JSON:
 `{"size":6,"givens":[-1,0,1,...],"solution":[0,1,...]}` (`-1` = leeg).
 
 ## Patterns (plaatjespuzzel)
 
 Kleur vakken; per rij en kolom staan de lengtes van de aaneengesloten gekleurde stukken,
-op volgorde. Niveaus (vierkant): 5, 5, 6, 7, 8, 9, 10. JSON:
+op volgorde. Niveaus (vierkant): 5, 5, 6, 6, 6, 6, 6. JSON:
 `{"size":5,"rowClues":[[2,1],[5],[]...],"colClues":[...],"solution":[0,1,...]}`.
 Een lege rij heeft `[]`.
 
@@ -49,14 +49,14 @@ Niveaus: 4, 4, 5, 5, 5, 6, 6. JSON:
 ## Stars
 
 Zet in elke rij, elke kolom en elk gebied precies één ster; sterren raken elkaar nergens,
-ook niet schuin. Het veld is n×n met n gebieden. Niveaus: 5, 6, 6, 7, 7, 8, 8. JSON:
+ook niet schuin. Het veld is n×n met n gebieden. Niveaus: 5, 5, 6, 6, 6, 7, 7. JSON:
 `{"size":6,"regions":[0,0,1,...],"solution":[5,2,4,1,3,0]}` (`regions`: gebied per vak,
 0..n-1; `solution`: de kolom van de ster per rij).
 
 ## Links
 
 Verbind de twee stippen van elke kleur met een pad van buurvakken (horizontaal of
-verticaal); paden kruisen niet en vullen samen het hele veld. Niveaus: 5, 5, 6, 6, 7, 7, 8.
+verticaal); paden kruisen niet en vullen samen het hele veld. Niveaus: 5, 5, 6, 6, 6, 7, 7.
 JSON: `{"size":6,"ends":[-1,0,...],"solution":[[9,3,4,5],[7,13,...],...]}` (`ends`: kleur
 van de stip per vak, -1 = geen stip, elke kleur precies twee keer; `solution`: per kleur de
 vakken van het pad, van stip tot stip).

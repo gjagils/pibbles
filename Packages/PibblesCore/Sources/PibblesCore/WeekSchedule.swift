@@ -15,8 +15,8 @@ public struct Level: Hashable, Sendable {
 public enum WeekSchedule {
     public static let levels: [Level] = [
         Level(size: 5, pieceCount: 4), Level(size: 5, pieceCount: 5), Level(size: 6, pieceCount: 5),
-        Level(size: 6, pieceCount: 6), Level(size: 6, pieceCount: 7), Level(size: 7, pieceCount: 7),
-        Level(size: 7, pieceCount: 8),
+        Level(size: 6, pieceCount: 6), Level(size: 6, pieceCount: 7), Level(size: 6, pieceCount: 7),
+        Level(size: 6, pieceCount: 8),
     ]
 
     /// `weekday`: Monday is 0, Sunday is 6. Other values wrap around the week.

@@ -16,7 +16,7 @@ import Foundation
 ///   valid, unique and deterministic, so `generate` always ends with a puzzle.
 public enum PatternsGenerator {
     /// Grid size per weekday, Monday 0 … Sunday 6.
-    public static let sizes: [Int] = [5, 5, 6, 7, 8, 9, 10]
+    public static let sizes: [Int] = [5, 5, 6, 6, 6, 6, 6]
     static let density = 0.58
     static let mirrorChance = 0.5
     static let maxEmptyLines = 1

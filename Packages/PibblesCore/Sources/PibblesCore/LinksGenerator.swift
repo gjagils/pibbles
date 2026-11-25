@@ -21,10 +21,10 @@ import Foundation
 /// straight path per row, which is unique (every path must cross every column once).
 public enum LinksGenerator {
     /// Grid size per weekday, Monday 0 … Sunday 6.
-    public static let sizes: [Int] = [5, 5, 6, 6, 7, 7, 8]
+    public static let sizes: [Int] = [5, 5, 6, 6, 6, 7, 7]
     /// The range of colours per weekday: fewer colours (longer paths) later in the week.
-    static let minColours: [Int] = [5, 4, 6, 5, 7, 6, 7]
-    static let maxColours: [Int] = [6, 5, 7, 6, 8, 7, 8]
+    static let minColours: [Int] = [5, 4, 6, 5, 4, 6, 5]
+    static let maxColours: [Int] = [6, 5, 7, 6, 5, 7, 6]
     static let maxAttempts = 3000
     static let hugPercent = 50
 

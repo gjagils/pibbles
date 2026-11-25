@@ -93,3 +93,14 @@ mag worden teruggedraaid; de reden staat erbij.
       (dinsdag 24 november toevallig niet). De weekpakketten van 23 en 30 november op de server
       zijn vervangen; de server keurt een blok met een dubbel getal af. Een toestel met een
       oude versie krijgt een ander Sums-bord dan de server en zijn uitslag wordt afgekeurd.
+25. **Kleinere borden: een tussendoortje** (25 november, met de eigenaar, na feedback dat de
+    borden later in de week te groot, te moeilijk en te lang werden).
+    - Elk bord groeit hooguit twee keer in de week en blijft klein: Patterns 5, 5, 6, 6, 6, 6, 6
+      (was tot 10), Stars en Links 5, 5, 6, 6, 6, 7, 7 (was tot 8), Logic 6, 6, 8, 8, 8, 8, 8
+      (was tot 10), Blocks hooguit 6×6 (zaterdag 7 stukken, zondag 8). Signs en Sums blijven.
+    - Links op vrijdag en zondag minder kleuren (4–5 en 5–6), zodat die dagen lastiger blijven
+      dan de dag ervoor zonder groter bord.
+    - De puzzels tot en met woensdag 25 november zijn gelijk gebleven; vanaf donderdag 26
+      november zijn Patterns, Stars, Links, Logic (za/zo) en Blocks (za/zo) anders. De
+      weekpakketten van 23 en 30 november op de server zijn vervangen. Het prototype en de
+      vingerafdrukken in de tests zijn bijgewerkt.

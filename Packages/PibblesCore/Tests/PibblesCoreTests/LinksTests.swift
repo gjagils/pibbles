@@ -330,11 +330,13 @@ final class LinksGeneratorTests: XCTestCase {
     }
 
     func testFingerprintMonday() {
-        check(0, ends: [0, 1, 2, -1, 2, -1, -1, 3, -1, 3, -1, -1, 4, 5, -1, -1, -1, -1, 4, -1, 0, -1, -1, 1, 5])
+        check(0, ends: [0, 1, 2, -1, 2, -1, -1, 3, -1, 3, -1, -1, 4, 5, -1, -1, -1, -1, 4, -1, 0, -1, -1, 1,
+                        5])
     }
 
     func testFingerprintTuesday() {
-        check(1, ends: [-1, 0, -1, -1, -1, -1, 1, -1, 2, 1, -1, -1, 0, -1, 2, -1, -1, -1, -1, -1, 3, 4, -1, 4, 3])
+        check(1, ends: [-1, 0, -1, -1, -1, -1, 1, -1, 2, 1, -1, -1, 0, -1, 2, -1, -1, -1, -1, -1, 3, 4, -1, 4,
+                        3])
     }
 
     func testFingerprintWednesday() {
@@ -348,23 +350,24 @@ final class LinksGeneratorTests: XCTestCase {
     }
 
     func testFingerprintFriday() {
-        check(4, ends: [-1, -1, -1, 0, -1, -1, 1, 0, 2, 1, -1, -1, -1, 3, 4, -1, -1, -1, 3, -1, 5, -1, -1, -1,
-                        2, 4, -1, -1, 6, 7, -1, -1, -1, -1, 7, -1, -1, -1, -1, 5, -1, -1, -1, -1, 6, -1, -1, -1, -1])
+        check(4, ends: [-1, 0, 1, -1, -1, 2, -1, -1, -1, 3, -1, -1, -1, 3, -1, -1, -1, -1, -1, -1, 1, 4, -1, -1,
+                        4, -1, -1, 0, -1, -1, -1, -1, -1, -1, -1, 2])
     }
 
     func testFingerprintSaturday() {
         check(5, ends: [-1, -1, -1, 0, -1, 1, -1, -1, 2, -1, -1, -1, 0, -1, 3, -1, -1, -1, 4, -1, -1, 5, -1, -1,
-                        -1, -1, -1, -1, 6, -1, -1, 6, -1, -1, -1, -1, 5, 2, -1, 3, 4, -1, -1, -1, -1, -1, 1, -1, -1])
+                        -1, -1, -1, -1, 6, -1, -1, 6, -1, -1, -1, -1, 5, 2, -1, 3, 4, -1, -1, -1, -1, -1, 1, -1,
+                        -1])
     }
 
     func testFingerprintSunday() {
-        check(6, ends: [-1, -1, -1, -1, -1, -1, -1, 0, 0, 1, -1, -1, -1, -1, -1, -1, -1, 2, 3, -1, -1, -1, -1, -1,
-                        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 4, -1, -1, 5, 3, -1, -1, -1, -1, -1, -1, 4, 5, 1,
-                        -1, 6, -1, -1, -1, -1, -1, 6, -1, 2, -1, -1, -1, -1, -1, -1])
+        check(6, ends: [0, -1, -1, -1, 0, -1, 1, 2, -1, -1, 1, -1, -1, 2, -1, 3, -1, -1, -1, -1, -1, -1, -1, -1,
+                        -1, -1, -1, -1, -1, -1, 4, -1, -1, -1, -1, -1, -1, -1, -1, 5, -1, -1, -1, -1, -1, 3, 4, -1,
+                        5])
     }
 
     func testSizesRunFromMondayToSunday() {
-        XCTAssertEqual(LinksGenerator.sizes, [5, 5, 6, 6, 7, 7, 8])
+        XCTAssertEqual(LinksGenerator.sizes, [5, 5, 6, 6, 6, 7, 7])
     }
 
     func testSameSeedGivesTheSamePuzzle() {
@@ -374,7 +377,7 @@ final class LinksGeneratorTests: XCTestCase {
 
     func testWeekdayOutsideTheWeekIsClamped() {
         XCTAssertEqual(LinksGenerator.generate(weekday: -2, seed: "x").size, 5)
-        XCTAssertEqual(LinksGenerator.generate(weekday: 11, seed: "x").size, 8)
+        XCTAssertEqual(LinksGenerator.generate(weekday: 11, seed: "x").size, 7)
     }
 
     func testFallbackIsUnique() {
