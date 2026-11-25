@@ -57,7 +57,7 @@ struct NumbersBoardView: View {
         }
     }
 
-    let gap = 22.0
+    let gap = 26.0
 
     var cellSize: Double {
         let n = Double(puzzle.size)
@@ -66,14 +66,26 @@ struct NumbersBoardView: View {
         return max(20.0, min(fromWidth, fromHeight))
     }
 
-    /// The sign between two neighbouring squares, as the player reads it left to right
-    /// or top to bottom: "<", ">", "∧", "∨" or "".
-    func sign(_ first: Int, _ second: Int, vertical: Bool) -> String {
+    /// Where the sign between two neighbouring squares points: always at the smaller one.
+    /// -1 no sign, else a `SignChevron` direction.
+    func sign(_ first: Int, _ second: Int, vertical: Bool) -> Int {
         for relation in puzzle.relations {
-            if relation.lo == first && relation.hi == second { return vertical ? "∧" : "<" }
-            if relation.lo == second && relation.hi == first { return vertical ? "∨" : ">" }
+            if relation.lo == first && relation.hi == second { return vertical ? SignChevron.up : SignChevron.left }
+            if relation.lo == second && relation.hi == first { return vertical ? SignChevron.down : SignChevron.right }
         }
-        return ""
+        return -1
+    }
+
+    @ViewBuilder
+    func signView(_ direction: Int, width: Double) -> some View {
+        if direction >= 0 {
+            SignChevron(direction: direction)
+                .stroke(PibblesStyle.orange, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
+                .frame(width: 15.0, height: 15.0)
+                .frame(width: width, height: gap)
+        } else {
+            Color.clear.frame(width: width, height: gap)
+        }
     }
 
     var body: some View {
@@ -86,20 +98,14 @@ struct NumbersBoardView: View {
                         ForEach(0..<n, id: \.self) { col in
                             square(row * n + col, bad: conflicts.contains(row * n + col))
                             if col < n - 1 {
-                                Text(sign(row * n + col, row * n + col + 1, vertical: false))
-                                    .font(PibblesStyle.title(17.0))
-                                    .foregroundStyle(PibblesStyle.orange)
-                                    .frame(width: gap)
+                                signView(sign(row * n + col, row * n + col + 1, vertical: false), width: gap)
                             }
                         }
                     }
                     if row < n - 1 {
                         HStack(spacing: 0.0) {
                             ForEach(0..<n, id: \.self) { col in
-                                Text(sign(row * n + col, row * n + col + n, vertical: true))
-                                    .font(PibblesStyle.title(17.0))
-                                    .foregroundStyle(PibblesStyle.orange)
-                                    .frame(width: cellSize, height: gap)
+                                signView(sign(row * n + col, row * n + col + n, vertical: true), width: cellSize)
                                 if col < n - 1 {
                                     Spacer().frame(width: gap, height: gap)
                                 }
@@ -168,5 +174,38 @@ struct NumbersBoardView: View {
             selected = -1
             onSolved(hints, Answer.list(values))
         }
+    }
+}
+
+/// A bold arrowhead between two Signs squares; the point is at the smaller number.
+struct SignChevron: Shape {
+    static let left = 0
+    static let right = 1
+    static let up = 2
+    static let down = 3
+    let direction: Int
+
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        var path = Path()
+        if direction == SignChevron.left {
+            path.move(to: CGPoint(x: w * 0.75, y: 0.0))
+            path.addLine(to: CGPoint(x: w * 0.2, y: h * 0.5))
+            path.addLine(to: CGPoint(x: w * 0.75, y: h))
+        } else if direction == SignChevron.right {
+            path.move(to: CGPoint(x: w * 0.25, y: 0.0))
+            path.addLine(to: CGPoint(x: w * 0.8, y: h * 0.5))
+            path.addLine(to: CGPoint(x: w * 0.25, y: h))
+        } else if direction == SignChevron.up {
+            path.move(to: CGPoint(x: 0.0, y: h * 0.75))
+            path.addLine(to: CGPoint(x: w * 0.5, y: h * 0.2))
+            path.addLine(to: CGPoint(x: w, y: h * 0.75))
+        } else {
+            path.move(to: CGPoint(x: 0.0, y: h * 0.25))
+            path.addLine(to: CGPoint(x: w * 0.5, y: h * 0.8))
+            path.addLine(to: CGPoint(x: w, y: h * 0.25))
+        }
+        return path
     }
 }
